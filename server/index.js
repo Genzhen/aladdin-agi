@@ -38,6 +38,17 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
+// ── 生产：静态托管前端（app/dist 由 vite build 产出；开发期 5173 走 vite 代理）──
+// 同源部署的好处：前端 fetch('/api/…') 不跨域，也不需要 CORS（上面 cors() 只是开发期双端口用）
+const path = require("path");
+const dist = path.join(__dirname, "../app/dist");
+if (require("fs").existsSync(dist)) {
+  app.use(express.static(dist));
+  // SPA 兜底：/agent/1 这类前端路由刷新时别 404，统一回 index.html（API 路径除外）
+  app.get(/^\/(?!api\/).*/, (_req, res) => res.sendFile(path.join(dist, "index.html")));
+  console.log("🌐 前端静态托管  ../app/dist");
+}
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`🚀 后端 API    http://localhost:${PORT}`);
