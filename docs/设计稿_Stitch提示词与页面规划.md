@@ -231,4 +231,4 @@ Honest votes earn rewards; dishonest votes are slashed."
 一切数字要么真实取数、要么明确标"待"——**绝不为了像设计稿而编造数据**。
 （对照中顺手修掉：删 Vite 模板残留 App.jsx/App.css/assets；S3 分类下拉补齐 Translation/Audio。）
 
-设计图与 Stitch 生成的 HTML 备份：`/tmp/stitch-designs/`（重启会丢，源在 Stitch 项目里随时可再拉）。
+设计图与 Stitch 生成的 HTML 已存档进仓库：`docs/设计稿_Stitch七屏/`（含屏 ID 清单，2026-08-19 落盘）。

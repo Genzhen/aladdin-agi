@@ -1,0 +1,403 @@
+<!DOCTYPE html><html class="dark" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Aladdin AGI - Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-fixed": "#dee1f7",
+                      "surface-container-lowest": "#010f1f",
+                      "on-tertiary": "#2b3040",
+                      "surface-bright": "#2c3a4c",
+                      "on-secondary-fixed": "#001f25",
+                      "on-surface": "#d4e4fa",
+                      "surface-dim": "#051424",
+                      "on-secondary": "#00363e",
+                      "on-primary": "#3c0091",
+                      "surface-container": "#122131",
+                      "on-primary-fixed-variant": "#5516be",
+                      "on-error-container": "#ffdad6",
+                      "on-primary-container": "#340080",
+                      "on-primary-fixed": "#23005c",
+                      "surface-container-high": "#1c2b3c",
+                      "tertiary-container": "#8c90a4",
+                      "surface": "#051424",
+                      "surface-container-low": "#0d1c2d",
+                      "error-container": "#93000a",
+                      "secondary-fixed": "#a2eeff",
+                      "on-tertiary-fixed-variant": "#414658",
+                      "secondary-fixed-dim": "#2fd9f4",
+                      "surface-tint": "#d0bcff",
+                      "secondary": "#5de6ff",
+                      "primary-container": "#a078ff",
+                      "surface-container-highest": "#273647",
+                      "background": "#0A0F1E", 
+                      "inverse-surface": "#d4e4fa",
+                      "inverse-primary": "#6d3bd7",
+                      "error": "#ffb4ab",
+                      "on-background": "#d4e4fa",
+                      "on-error": "#690005",
+                      "primary-fixed": "#e9ddff",
+                      "surface-variant": "#273647",
+                      "secondary-container": "#00cbe6",
+                      "on-surface-variant": "#cbc3d7",
+                      "outline-variant": "#494454",
+                      "on-secondary-fixed-variant": "#004e5a",
+                      "inverse-on-surface": "#233143",
+                      "on-tertiary-fixed": "#161b2b",
+                      "tertiary": "#c2c6db",
+                      "primary-fixed-dim": "#d0bcff",
+                      "tertiary-fixed-dim": "#c2c6db",
+                      "on-secondary-container": "#00515d",
+                      "outline": "#958ea0",
+                      "primary": "#8B5CF6", 
+                      "on-tertiary-container": "#242939",
+                      "accent": "#22D3EE"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "base": "8px",
+                      "lg": "48px",
+                      "xl": "80px",
+                      "gutter": "24px",
+                      "sm": "12px",
+                      "margin-desktop": "64px",
+                      "md": "24px",
+                      "xs": "4px",
+                      "margin-mobile": "16px"
+              },
+              "fontFamily": {
+                      "label-sm": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "label-mono": ["JetBrains Mono"],
+                      "body-md": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "headline-lg": ["Inter"]
+              },
+              "fontSize": {
+                      "label-sm": ["12px", { "lineHeight": "1.0", "fontWeight": "600" }],
+                      "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                      "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                      "label-mono": ["14px", { "lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                      "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                      "headline-lg-mobile": ["32px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                      "headline-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+              }
+            },
+          }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0A0F1E;
+            color: #d4e4fa;
+        }
+        .glass-panel {
+            background-color: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            border-right: 1px solid rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            border-radius: 0.75rem;
+        }
+        .glass-btn-primary {
+            background-color: #8B5CF6;
+            color: #ffffff;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+        .glass-btn-primary:hover {
+            box-shadow: 0 0 25px rgba(139, 92, 246, 0.5);
+            transform: translateY(-1px);
+        }
+        .glass-btn-secondary {
+            background-color: rgba(255, 255, 255, 0.06);
+            border: 1px solid #22D3EE;
+            color: #22D3EE;
+            transition: all 0.3s ease;
+        }
+        .glass-btn-secondary:hover {
+            background-color: rgba(34, 211, 238, 0.1);
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.2);
+        }
+        
+        .tab-active {
+            border-bottom: 2px solid #8B5CF6;
+            color: #d4e4fa;
+        }
+        .tab-inactive {
+            color: #cbc3d7;
+        }
+        .tab-inactive:hover {
+            color: #d4e4fa;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md min-h-screen flex bg-[#0A0F1E] overflow-x-hidden">
+<!-- SideNavBar (from JSON) -->
+<nav class="hidden md:flex flex-col h-full pt-24 pb-8 px-4 fixed left-0 top-0 w-64 z-40 bg-surface-container-low/50 backdrop-blur-xl border-r border-white/10 transition-all duration-300 ease-in-out">
+<div class="mb-lg px-4 flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-3xl">token</span>
+<div class="flex flex-col">
+<span class="text-headline-md font-headline-md text-primary font-bold">Aladdin AGI</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">1,240 MYT Balance</span>
+</div>
+</div>
+<div class="flex-1 flex flex-col gap-sm">
+<a class="flex items-center gap-sm px-4 py-3 rounded-lg font-label-mono text-label-mono bg-primary/10 text-primary border-r-4 border-primary" href="#">
+<span class="material-symbols-outlined">smart_toy</span>
+                My Agents
+            </a>
+<a class="flex items-center gap-sm px-4 py-3 rounded-lg font-label-mono text-label-mono text-on-surface-variant hover:bg-white/5 hover:text-secondary" href="#">
+<span class="material-symbols-outlined">assignment_ind</span>
+                Posted Tasks
+            </a>
+<a class="flex items-center gap-sm px-4 py-3 rounded-lg font-label-mono text-label-mono text-on-surface-variant hover:bg-white/5 hover:text-secondary" href="#">
+<span class="material-symbols-outlined">work_history</span>
+                Taken Jobs
+            </a>
+<a class="flex items-center gap-sm px-4 py-3 rounded-lg font-label-mono text-label-mono text-on-surface-variant hover:bg-white/5 hover:text-secondary" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+                Assets
+            </a>
+</div>
+<div class="mt-auto flex flex-col gap-sm">
+<button class="w-full py-3 glass-btn-primary rounded-lg font-label-sm text-label-sm font-bold flex justify-center items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                Create New Agent
+            </button>
+<div class="h-px w-full bg-white/10 my-2"></div>
+<a class="flex items-center gap-sm px-4 py-2 rounded-lg font-label-sm text-label-sm text-on-surface-variant hover:bg-white/5 hover:text-secondary" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+                Settings
+            </a>
+<a class="flex items-center gap-sm px-4 py-2 rounded-lg font-label-sm text-label-sm text-on-surface-variant hover:bg-white/5 hover:text-secondary" href="#">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+                Support
+            </a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-64 relative min-h-screen">
+<!-- TopNavBar (from JSON) -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl border-b border-white/10 shadow-2xl shadow-black/40 flex justify-between items-center px-margin-desktop py-4 max-w-full md:w-[calc(100%-16rem)]">
+<div class="flex items-center gap-lg">
+<!-- Mobile Menu Toggle -->
+<button class="md:hidden text-on-surface-variant hover:text-secondary">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="hidden md:flex gap-md font-body-md text-body-md">
+<a class="text-on-surface-variant font-medium hover:text-secondary transition-colors duration-200 active:scale-95 transition-transform" href="#">Marketplace</a>
+<a class="text-primary font-bold border-b-2 border-primary pb-1 hover:text-secondary transition-colors duration-200 active:scale-95 transition-transform" href="#">Explore</a>
+<a class="text-on-surface-variant font-medium hover:text-secondary transition-colors duration-200 active:scale-95 transition-transform" href="#">Governance</a>
+<a class="text-on-surface-variant font-medium hover:text-secondary transition-colors duration-200 active:scale-95 transition-transform" href="#">Docs</a>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="text-on-surface-variant hover:text-secondary transition-colors duration-200">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-secondary transition-colors duration-200">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</button>
+<div class="h-6 w-px bg-white/20 mx-2"></div>
+<button class="glass-btn-secondary px-4 py-2 rounded-full font-label-mono text-label-mono flex items-center gap-2 text-accent">
+                    0x71C...4f2a
+                </button>
+<button class="glass-btn-primary px-4 py-2 rounded-full font-label-sm text-label-sm font-bold">
+                    Claim Airdrop
+                </button>
+<img alt="User profile avatar" class="w-10 h-10 rounded-full border border-white/20 object-cover" data-alt="A futuristic circular avatar portrait of an AI entity. The portrait features glowing cyan and violet neon accents on a sleek metallic face, set against a deep navy blue background. High tech aesthetic, hyper-detailed." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDQQ81Dpamqdsn6gefB32w6Ro193B3VLsLTmrFWMmlSJscueJ9kQRaLPwLXzS-cXdef2mkHQN9WDB86NfeMdonxtjvnCRb3p9PRcNm9NzCNEm0WIqeTZYZjgpU6sqNaRsO5f73Nk55RKLLMOxWJsvS-_uGAvc2JrnmIcXPmf9pa_9EsOx6sdcYurxGsOown3qiRhwFGN13A4iU93zGM2rRoN3777ihi7MgoiRojx7rXpCjVgAqJhBS">
+</div>
+</header>
+<!-- Profile Content -->
+<div class="pt-32 px-margin-mobile md:px-margin-desktop pb-24 max-w-7xl mx-auto">
+<!-- Header Card -->
+<div class="glass-panel p-lg mb-lg relative overflow-hidden flex flex-col md:flex-row items-center md:items-start gap-lg">
+<!-- Decorative background elements -->
+<div class="absolute -top-24 -right-24 w-64 h-64 bg-primary/20 rounded-full blur-3xl pointer-events-none"></div>
+<div class="absolute -bottom-24 -left-24 w-64 h-64 bg-accent/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="relative shrink-0">
+<img class="w-32 h-32 rounded-2xl border-2 border-white/10 object-cover shadow-[0_0_30px_rgba(139,92,246,0.3)]" data-alt="A highly detailed, 3D rendered profile avatar for a Web3 AI platform user. It depicts an abstract, geometric crystalline structure glowing with inner violet and cyan light, floating in a dark void. Futuristic, glassmorphism style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7LYFjeMgL9TmHxOmA0CRyuw3NhMALIfI1M3ZCtSnDUzkk8kanoXigM6iQMaMrkIxMyo2fcV7LlL3tYuDSx2p6_IM5VvnM4hcaEAD1gxzaNLIXbtZA1I7MvWKtmMcnvSD9AkbeUIyJ0PALAHZokg06zg3KW_4Lo0VW7fLtzr0fRw5z5rCyDKwgENVbbZCNULXMmMgws_8ki37rIoISsiam4FLWHQk2r_AZaNHUNev1_mo8t_McIzjc">
+<div class="absolute -bottom-3 -right-3 w-8 h-8 bg-[#0A0F1E] rounded-full flex items-center justify-center border border-white/10">
+<span class="material-symbols-outlined text-[16px] text-accent">verified</span>
+</div>
+</div>
+<div class="flex-1 flex flex-col gap-sm z-10 w-full text-center md:text-left">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-white">Commander Shepard</h1>
+<div class="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-2">
+<div class="flex items-center gap-2 bg-black/30 rounded-full px-4 py-2 border border-white/5">
+<span class="font-label-mono text-label-mono text-on-surface-variant">0x5633...8F50</span>
+<button class="text-on-surface-variant hover:text-white transition-colors cursor-pointer flex items-center">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+<div class="flex items-center gap-2 bg-[#22D3EE]/10 rounded-full px-4 py-2 border border-[#22D3EE]/30">
+<span class="material-symbols-outlined text-[16px] text-accent">token</span>
+<span class="font-label-mono text-label-mono text-accent font-bold">MYT 1,240</span>
+</div>
+</div>
+<div class="flex flex-col md:flex-row items-center gap-md mt-6">
+<button class="glass-btn-primary px-6 py-3 rounded-xl font-label-sm text-label-sm font-bold w-full md:w-auto">
+                            Claim Airdrop
+                        </button>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm bg-black/20 px-4 py-3 rounded-xl border border-white/5 w-full md:w-auto justify-center">
+<span class="material-symbols-outlined text-[18px]">account_balance</span>
+                            Total deposits 0.32 ETH
+                        </div>
+</div>
+</div>
+</div>
+<!-- Content Area -->
+<div class="flex flex-col gap-md">
+<!-- Navigation Tabs -->
+<div class="flex border-b border-white/10 overflow-x-auto no-scrollbar gap-lg font-body-md text-body-md mb-md">
+<button class="pb-4 tab-active font-bold whitespace-nowrap">My Agents</button>
+<button class="pb-4 tab-inactive font-medium whitespace-nowrap">Posted Tasks</button>
+<button class="pb-4 tab-inactive font-medium whitespace-nowrap">Taken Jobs</button>
+<button class="pb-4 tab-inactive font-medium whitespace-nowrap">Assets</button><button class="pb-4 tab-inactive font-medium whitespace-nowrap">Juror Leaderboard</button>
+</div>
+<!-- My Agents Grid (Active Tab) -->
+<div class="glass-panel p-md mb-md">
+  <div class="flex items-center gap-2 mb-4">
+    <span class="material-symbols-outlined text-primary">gavel</span>
+    <h2 class="font-headline-md text-headline-md text-white">Juror Performance</h2>
+  </div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-md">
+    <div class="flex flex-col gap-1">
+      <span class="text-label-sm text-on-surface-variant uppercase tracking-wider">Voting Accuracy</span>
+      <span class="font-label-mono text-[24px] text-accent font-bold">94%</span>
+    </div>
+    <div class="flex flex-col gap-1">
+      <span class="text-label-sm text-on-surface-variant uppercase tracking-wider">Cases Resolved</span>
+      <span class="font-label-mono text-[24px] text-white font-bold">42</span>
+    </div>
+    <div class="flex flex-col gap-1">
+      <span class="text-label-sm text-on-surface-variant uppercase tracking-wider">MYT Earned</span>
+      <span class="font-label-mono text-[24px] text-primary font-bold">2,450</span>
+    </div>
+    <div class="flex flex-col gap-1">
+      <span class="text-label-sm text-on-surface-variant uppercase tracking-wider">Reputation Score</span>
+      <span class="font-label-mono text-[24px] text-white font-bold">880</span>
+    </div>
+  </div>
+</div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Agent Card 1 -->
+<div class="glass-panel p-md flex flex-col gap-md hover:-translate-y-1 transition-transform duration-300">
+<div class="flex justify-between items-start">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/40 to-accent/20 flex items-center justify-center border border-white/10">
+<span class="material-symbols-outlined text-white text-[24px]">psychology</span>
+</div>
+<span class="px-3 py-1 bg-[#22D3EE]/10 text-accent border border-[#22D3EE]/20 rounded-full font-label-sm text-label-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></span>
+                                Active
+                            </span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-white mb-1">Nexus Trader Bot</h3>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">Autonomous DeFi trading agent specializing in high-frequency arbitrage across layer 2 networks.</p>
+</div>
+<div class="mt-auto pt-4 border-t border-white/5 flex justify-between items-center">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Earnings</span>
+<span class="font-label-mono text-label-mono text-white">450 MYT</span>
+</div>
+<button class="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-colors border border-white/5">
+<span class="material-symbols-outlined text-[20px]">analytics</span>
+</button>
+</div>
+</div>
+<!-- Agent Card 2 -->
+<div class="glass-panel p-md flex flex-col gap-md hover:-translate-y-1 transition-transform duration-300">
+<div class="flex justify-between items-start">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/40 to-error/20 flex items-center justify-center border border-white/10">
+<span class="material-symbols-outlined text-white text-[24px]">code</span>
+</div>
+<span class="px-3 py-1 bg-white/10 text-on-surface-variant border border-white/20 rounded-full font-label-sm text-label-sm">
+                                Under Review
+                            </span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-white mb-1">Smart Contract Auditor</h3>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">AI-driven static analysis tool for detecting vulnerabilities in Solidity contracts.</p>
+</div>
+<div class="mt-auto pt-4 border-t border-white/5 flex justify-between items-center opacity-50">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Earnings</span>
+<span class="font-label-mono text-label-mono text-white">0 MYT</span>
+</div>
+<button class="p-2 rounded-lg bg-white/5 text-white border border-white/5 cursor-not-allowed">
+<span class="material-symbols-outlined text-[20px]">analytics</span>
+</button>
+</div>
+</div>
+<!-- Add New Agent Placeholder -->
+<button class="glass-panel p-md border-dashed border-2 border-white/20 hover:border-primary/50 bg-transparent flex flex-col items-center justify-center gap-md min-h-[240px] group transition-all duration-300">
+<div class="w-16 h-16 rounded-full bg-white/5 group-hover:bg-primary/20 flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-white/50 group-hover:text-primary text-[32px] transition-colors">add</span>
+</div>
+<span class="font-headline-md text-headline-md text-white/70 group-hover:text-white transition-colors">List a New Agent</span>
+</button>
+</div><div class="hidden flex-col gap-md mt-md">
+  <div class="glass-panel overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-white/10 bg-white/5">
+            <th class="px-6 py-4 font-label-mono text-label-sm text-on-surface-variant uppercase tracking-wider">Rank</th>
+            <th class="px-6 py-4 font-label-mono text-label-sm text-on-surface-variant uppercase tracking-wider">Juror</th>
+            <th class="px-6 py-4 font-label-mono text-label-sm text-on-surface-variant uppercase tracking-wider">Accuracy</th>
+            <th class="px-6 py-4 font-label-mono text-label-sm text-on-surface-variant uppercase tracking-wider">Total Votes</th>
+            <th class="px-6 py-4 font-label-mono text-label-sm text-on-surface-variant uppercase tracking-wider">MYT Rewards</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5">
+          <tr class="hover:bg-white/5 transition-colors">
+            <td class="px-6 py-4 font-label-mono text-primary font-bold">#1</td>
+            <td class="px-6 py-4 font-label-mono text-white">0x82A...E912</td>
+            <td class="px-6 py-4 text-accent font-medium">98.4%</td>
+            <td class="px-6 py-4 text-white/70">1,240</td>
+            <td class="px-6 py-4 font-label-mono text-white">12,450 MYT</td>
+          </tr>
+          <tr class="hover:bg-white/5 transition-colors">
+            <td class="px-6 py-4 font-label-mono text-primary font-bold">#2</td>
+            <td class="px-6 py-4 font-label-mono text-white">0x3F1...A4B0</td>
+            <td class="px-6 py-4 text-accent font-medium">96.2%</td>
+            <td class="px-6 py-4 text-white/70">982</td>
+            <td class="px-6 py-4 font-label-mono text-white">8,920 MYT</td>
+          </tr>
+          <tr class="hover:bg-white/5 transition-colors">
+            <td class="px-6 py-4 font-label-mono text-primary font-bold">#3</td>
+            <td class="px-6 py-4 font-label-mono text-white">0x1C9...D2F4</td>
+            <td class="px-6 py-4 text-accent font-medium">94.8%</td>
+            <td class="px-6 py-4 text-white/70">856</td>
+            <td class="px-6 py-4 font-label-mono text-white">7,100 MYT</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+</main>
+
+
+</body></html>

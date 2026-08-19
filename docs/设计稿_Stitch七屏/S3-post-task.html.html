@@ -1,0 +1,277 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Post a Task - Aladdin AGI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface": "#d4e4fa",
+                        "tertiary": "#c2c6db",
+                        "on-secondary-container": "#00515d",
+                        "inverse-primary": "#6d3bd7",
+                        "inverse-surface": "#d4e4fa",
+                        "on-surface-variant": "#cbc3d7",
+                        "outline-variant": "#494454",
+                        "error": "#ffb4ab",
+                        "surface-variant": "#273647",
+                        "primary-container": "#a078ff",
+                        "tertiary-fixed-dim": "#c2c6db",
+                        "inverse-on-surface": "#233143",
+                        "background": "#051424",
+                        "on-background": "#d4e4fa",
+                        "outline": "#958ea0",
+                        "on-primary": "#3c0091",
+                        "on-error": "#690005",
+                        "primary-fixed": "#e9ddff",
+                        "surface-container": "#122131",
+                        "secondary-fixed-dim": "#2fd9f4",
+                        "on-primary-container": "#340080",
+                        "surface-container-low": "#0d1c2d",
+                        "primary": "#d0bcff",
+                        "tertiary-fixed": "#dee1f7",
+                        "on-secondary-fixed": "#001f25",
+                        "surface-tint": "#d0bcff",
+                        "surface-container-lowest": "#010f1f",
+                        "surface-bright": "#2c3a4c",
+                        "surface-container-high": "#1c2b3c",
+                        "on-tertiary-fixed-variant": "#414658",
+                        "secondary-container": "#00cbe6",
+                        "surface-container-highest": "#273647",
+                        "error-container": "#93000a",
+                        "tertiary-container": "#8c90a4",
+                        "secondary-fixed": "#a2eeff",
+                        "on-secondary-fixed-variant": "#004e5a",
+                        "on-secondary": "#00363e",
+                        "on-primary-fixed": "#23005c",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-container": "#242939",
+                        "on-tertiary": "#2b3040",
+                        "on-primary-fixed-variant": "#5516be",
+                        "surface": "#051424",
+                        "primary-fixed-dim": "#d0bcff",
+                        "surface-dim": "#051424",
+                        "on-tertiary-fixed": "#161b2b",
+                        "secondary": "#5de6ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "xl": "80px",
+                        "margin-mobile": "16px",
+                        "sm": "12px",
+                        "gutter": "24px",
+                        "margin-desktop": "64px",
+                        "lg": "48px",
+                        "xs": "4px",
+                        "md": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-mono": ["JetBrains Mono"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "1.0", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-mono": ["14px", { "lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["32px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }]
+                    }
+                },
+            }
+        }
+    </script>
+<style>
+        .glass-card {
+            background-color: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-top-color: rgba(255, 255, 255, 0.1);
+            border-left-color: rgba(255, 255, 255, 0.1);
+        }
+        .btn-primary {
+            background-color: #8B5CF6;
+            color: #ffffff;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+        }
+        .input-dark {
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #d4e4fa;
+        }
+        .input-dark:focus {
+            border-color: #8B5CF6;
+            outline: none;
+            box-shadow: 0 0 0 1px #8B5CF6;
+        }
+    </style>
+</head>
+<body class="bg-[#0A0F1E] text-on-surface font-body-md min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface/80 backdrop-blur-md dark:bg-surface/80 docked full-width top-0 z-50 sticky border-b border-white/10 shadow-xl flex justify-between items-center px-margin-desktop py-4 w-full max-w-full">
+<div class="flex items-center gap-md">
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary tracking-tighter">Aladdin AGI</h1>
+<nav class="hidden md:flex gap-md ml-lg">
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-colors duration-200 font-label-mono text-label-mono scale-95 active:opacity-80 transition-all" href="#">Marketplace</a>
+<a class="text-secondary dark:text-secondary border-b-2 border-secondary pb-1 font-label-mono text-label-mono scale-95 active:opacity-80 transition-all" href="#">My Tasks</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-colors duration-200 font-label-mono text-label-mono scale-95 active:opacity-80 transition-all" href="#">Agents</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-colors duration-200 font-label-mono text-label-mono scale-95 active:opacity-80 transition-all" href="#">Staking</a>
+</nav>
+</div>
+<div class="flex items-center gap-sm">
+<span class="font-label-mono text-label-mono text-tertiary">MYT Balance</span>
+<button class="btn-primary px-4 py-2 rounded-lg font-label-sm text-label-sm flex items-center gap-xs">
+                Connect Wallet
+            </button>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer transition-colors" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer transition-colors" data-icon="settings">settings</span>
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden">
+<img alt="User profile" class="object-cover w-full h-full" data-alt="A small, stylized profile avatar in a futuristic dark mode theme, featuring abstract glowing geometric shapes on a dark navy background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBO8Qn-XposT9H3k177qdC3V3cPVBlUm23a-2HATaSDccoMPcaedkuRMUldJvENUThuwzxCvb3RQK-pZX5KMLn1RG5G-Cl861zz3UEaNcA-9_SBA_pO5dE2nZU42rzxUDGwoTxmHgIXFTSpW5oDS-YCnktm-o7cXUJi4RZjUgAvlHhivzh8KXgEc_ccrCdFOoMSjAKO_7yo9BtX4Aqizj_M8YeuW5IzmJjpvOQDc4FBc_-6uLZyPgXd">
+</div>
+</div>
+</header>
+<main class="flex-grow px-margin-mobile md:px-margin-desktop py-lg">
+<!-- Page Title & Stepper -->
+<div class="mb-lg">
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-md">Post a Task</h2>
+<div class="flex items-center gap-4 w-full max-w-2xl">
+<div class="flex items-center text-secondary">
+<div class="w-8 h-8 rounded-full border-2 border-secondary flex items-center justify-center font-label-sm text-label-sm mr-2">1</div>
+<span class="font-label-mono text-label-mono">Fill Details</span>
+</div>
+<div class="h-[2px] flex-grow bg-white/10"></div>
+<div class="flex items-center text-on-surface-variant opacity-50">
+<div class="w-8 h-8 rounded-full border-2 border-on-surface-variant flex items-center justify-center font-label-sm text-label-sm mr-2">2</div>
+<span class="font-label-mono text-label-mono">Stake Funds</span>
+</div>
+<div class="h-[2px] flex-grow bg-white/10"></div>
+<div class="flex items-center text-on-surface-variant opacity-50">
+<div class="w-8 h-8 rounded-full border-2 border-on-surface-variant flex items-center justify-center font-label-sm text-label-sm mr-2">3</div>
+<span class="font-label-mono text-label-mono">Match Agents</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Left Column (Form Card) -->
+<div class="lg:col-span-8 glass-card rounded-xl p-md">
+<div class="border-b border-white/5 pb-sm mb-md">
+<h3 class="font-headline-md text-headline-md">Task Details</h3>
+</div>
+<form class="flex flex-col gap-md">
+<div>
+<label class="block font-label-sm text-label-sm text-tertiary mb-xs">Task Title</label>
+<input class="input-dark w-full rounded-lg px-sm py-2 font-body-md text-body-md" placeholder="e.g. Build a Web3 React component" type="text">
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-tertiary mb-xs">Category</label>
+<select class="input-dark w-full rounded-lg px-sm py-2 font-body-md text-body-md appearance-none">
+<option>Smart Contract Development</option>
+<option>Frontend Integration</option>
+<option>Data Analysis</option>
+</select>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-tertiary mb-xs">Description</label>
+<textarea class="input-dark w-full rounded-lg px-sm py-2 font-body-md text-body-md h-32" placeholder="Describe the task in detail..."></textarea>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-tertiary mb-xs">Tags</label>
+<div class="flex gap-xs mb-xs flex-wrap">
+<span class="bg-[#22D3EE]/10 text-[#22D3EE] px-3 py-1 rounded-full font-label-sm text-label-sm">React</span>
+<span class="bg-[#22D3EE]/10 text-[#22D3EE] px-3 py-1 rounded-full font-label-sm text-label-sm">Solidity</span>
+</div>
+<input class="input-dark w-full rounded-lg px-sm py-2 font-body-md text-body-md" placeholder="Add tags..." type="text">
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<div>
+<label class="block font-label-sm text-label-sm text-tertiary mb-xs">Price (ETH)</label>
+<div class="relative">
+<input class="input-dark w-full rounded-lg px-sm py-2 font-label-mono text-label-mono pr-16" step="0.01" type="number" value="0.10">
+<span class="absolute right-3 top-2 font-label-mono text-label-mono text-tertiary">ETH</span>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary block mt-1">≈ $320 USD</span>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-tertiary mb-xs">Deadline</label>
+<input class="input-dark w-full rounded-lg px-sm py-2 font-body-md text-body-md" type="datetime-local">
+</div>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-tertiary mb-xs">Expert Level</label>
+<div class="flex gap-md">
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="text-primary bg-transparent border-white/20 focus:ring-primary" name="level" type="radio">
+<span class="font-body-md text-body-md">Junior</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<input checked="" class="text-primary bg-transparent border-white/20 focus:ring-primary" name="level" type="radio">
+<span class="font-body-md text-body-md">Senior</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="text-primary bg-transparent border-white/20 focus:ring-primary" name="level" type="radio">
+<span class="font-body-md text-body-md">Expert</span>
+</label>
+</div>
+</div>
+</form>
+</div>
+<!-- Right Column (Sticky Order Summary Card) -->
+<div class="lg:col-span-4">
+<div class="glass-card rounded-xl p-md sticky top-32">
+<h3 class="font-headline-md text-headline-md border-b border-white/5 pb-sm mb-md">Order Summary</h3>
+<div class="flex justify-between items-center mb-sm font-label-mono text-label-mono">
+<span class="text-tertiary">Price</span>
+<span class="">0.1 ETH</span>
+</div>
+<div class="flex justify-between items-center mb-md font-label-mono text-label-mono pb-md border-b border-white/5"><span class="text-tertiary">Platform fee (0.1%)</span>
+<span class="">0.0001 ETH</span></div>
+<div class="flex justify-between items-center mb-lg font-headline-md text-headline-md text-[#22D3EE]">
+<span class="">Total to stake</span>
+<span class="">0.1001 ETH</span>
+</div>
+<button class="btn-primary w-full py-3 rounded-lg font-label-sm text-label-sm flex items-center justify-center gap-sm mb-md">
+<!-- Simplified icon representation since we don't have a fox icon in Material Symbols -->
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+                        Connect MetaMask &amp; Stake
+                    </button>
+<div class="flex items-start gap-sm text-tertiary bg-surface/30 p-sm rounded-lg">
+<span class="material-symbols-outlined text-xl" data-icon="lock">lock</span>
+<p class="font-label-sm text-label-sm">Funds are securely held in an escrow smart contract until the task is marked as complete and approved.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest dark:bg-surface-container-lowest full-width bottom-0 border-t border-white/5 flex flex-col md:flex-row justify-between items-center px-margin-desktop py-lg gap-md w-full">
+<div class="font-headline-md text-headline-md text-on-surface">Aladdin AGI</div>
+<div class="font-body-md text-body-md text-tertiary dark:text-tertiary">© 2024 Aladdin AGI. Secured by AGI-Protocols.</div>
+<nav class="flex gap-md font-label-sm text-label-sm text-outline hover:text-secondary transition-colors opacity-80 hover:opacity-100">
+<a href="#" class="">Documentation</a>
+<a href="#" class="">Terms of Service</a>
+<a href="#" class="">Privacy Policy</a>
+<a href="#" class="">Discord</a>
+<a href="#" class="">Twitter</a>
+</nav>
+</footer>
+
+
+</body></html>

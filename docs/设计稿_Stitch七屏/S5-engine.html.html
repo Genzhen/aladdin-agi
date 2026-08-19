@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Aladdin AGI - Matching Engine</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-surface-variant": "#cbc3d7",
+                        "surface-tint": "#d0bcff",
+                        "surface-container-highest": "#273647",
+                        "tertiary-fixed": "#dee1f7",
+                        "surface-variant": "#273647",
+                        "on-tertiary-fixed-variant": "#414658",
+                        "surface-container-low": "#0d1c2d",
+                        "primary-fixed-dim": "#d0bcff",
+                        "background": "#051424",
+                        "error": "#ffb4ab",
+                        "on-primary-fixed": "#23005c",
+                        "on-primary": "#3c0091",
+                        "surface-container-lowest": "#010f1f",
+                        "surface-bright": "#2c3a4c",
+                        "secondary": "#5de6ff",
+                        "on-secondary-container": "#00515d",
+                        "surface": "#051424",
+                        "secondary-fixed-dim": "#2fd9f4",
+                        "outline-variant": "#494454",
+                        "on-secondary": "#00363e",
+                        "tertiary": "#c2c6db",
+                        "surface-container": "#122131",
+                        "on-error": "#690005",
+                        "inverse-on-surface": "#233143",
+                        "inverse-primary": "#6d3bd7",
+                        "on-tertiary-fixed": "#161b2b",
+                        "on-surface": "#d4e4fa",
+                        "primary-container": "#a078ff",
+                        "primary-fixed": "#e9ddff",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-container": "#8c90a4",
+                        "inverse-surface": "#d4e4fa",
+                        "secondary-fixed": "#a2eeff",
+                        "on-tertiary": "#2b3040",
+                        "surface-dim": "#051424",
+                        "outline": "#958ea0",
+                        "on-secondary-fixed-variant": "#004e5a",
+                        "error-container": "#93000a",
+                        "on-primary-fixed-variant": "#5516be",
+                        "primary": "#d0bcff",
+                        "secondary-container": "#00cbe6",
+                        "on-primary-container": "#340080",
+                        "tertiary-fixed-dim": "#c2c6db",
+                        "surface-container-high": "#1c2b3c",
+                        "on-background": "#d4e4fa",
+                        "on-secondary-fixed": "#001f25",
+                        "on-tertiary-container": "#242939"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "md": "24px",
+                        "xs": "4px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "64px",
+                        "sm": "12px",
+                        "lg": "48px",
+                        "base": "8px",
+                        "xl": "80px",
+                        "gutter": "24px"
+                    },
+                    fontFamily: {
+                        "headline-lg-mobile": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-mono": ["JetBrains Mono"]
+                    },
+                    fontSize: {
+                        "headline-lg-mobile": ["32px", { lineHeight: "1.2", fontWeight: "700" }],
+                        "body-md": ["16px", { lineHeight: "1.6", fontWeight: "400" }],
+                        "headline-md": ["24px", { lineHeight: "1.3", fontWeight: "600" }],
+                        "label-sm": ["12px", { lineHeight: "1.0", fontWeight: "600" }],
+                        "headline-lg": ["48px", { lineHeight: "1.1", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "body-lg": ["18px", { lineHeight: "1.6", fontWeight: "400" }],
+                        "label-mono": ["14px", { lineHeight: "1.0", letterSpacing: "0.05em", fontWeight: "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0A0F1E;
+            color: #d4e4fa;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-top-color: rgba(255, 255, 255, 0.1);
+            border-left-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+        .btn-primary {
+            background-color: #8B5CF6;
+            color: white;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid #22D3EE;
+            color: #22D3EE;
+        }
+        .wallet-btn {
+            border: 1px solid transparent;
+            background: linear-gradient(#0A0F1E, #0A0F1E) padding-box,
+                        linear-gradient(to right, #8B5CF6, #22D3EE) border-box;
+        }
+        .confidence-chip {
+            background: rgba(34, 211, 238, 0.1);
+            color: #22D3EE;
+        }
+        .dead-letter-badge {
+            background: rgba(255, 180, 171, 0.1);
+            color: #ffb4ab;
+            border: 1px solid rgba(255, 180, 171, 0.2);
+        }
+        .top-rank-border {
+            border: 1px solid #8B5CF6;
+            box-shadow: inset 0 0 10px rgba(139, 92, 246, 0.1);
+        }
+        
+        /* Animated connection lines */
+        .connector-line {
+            position: relative;
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+        .connector-line::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -50%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(to right, transparent, #8B5CF6, transparent);
+            animation: pulse-line 2s infinite linear;
+        }
+        @keyframes pulse-line {
+            0% { left: -50%; }
+            100% { left: 100%; }
+        }
+    </style>
+</head>
+<body class="min-h-screen font-body-md text-body-md overflow-x-hidden selection:bg-primary/30 selection:text-white">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-desktop h-20 bg-background/80 backdrop-blur-xl border-b border-white/10 shadow-sm">
+<div class="flex items-center gap-md">
+<span class="font-headline-md text-headline-md font-bold text-primary tracking-tight">Aladdin AGI</span>
+<nav class="hidden md:flex gap-md ml-lg">
+<a class="text-on-surface-variant hover:text-secondary transition-colors duration-200 active:scale-95 transition-transform font-label-sm text-label-sm" href="#">Agents</a>
+<a class="text-on-surface-variant hover:text-secondary transition-colors duration-200 active:scale-95 transition-transform font-label-sm text-label-sm" href="#">Tasks</a>
+<a class="text-primary border-b-2 border-primary pb-1 hover:text-secondary transition-colors duration-200 active:scale-95 transition-transform font-label-sm text-label-sm" href="#">Matching</a>
+</nav>
+</div>
+<div class="flex items-center gap-sm">
+<div class="hidden md:flex items-center gap-2 bg-surface-container/50 px-3 py-1.5 rounded-full border border-white/5">
+<span class="material-symbols-outlined text-secondary" style="font-size: 16px;">token</span>
+<span class="font-label-mono text-label-mono text-on-surface">1,240 ALDN</span>
+</div>
+<button class="wallet-btn px-4 py-2 rounded-full font-label-mono text-label-mono text-white active:scale-95 transition-transform">
+                Connect Wallet
+            </button>
+<img alt="User profile avatar" class="w-10 h-10 rounded-full object-cover border border-white/10 ml-2" data-alt="A futuristic, neon-lit cyberpunk style avatar portrait of an AI persona, glowing purple eyes, metallic accents, set against a dark tech background, high detail, 8k resolution, cinematic lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkQqha1uUoijUkOsRwYW370R6LG1T8tMoWyPycm5zdhVZIGXYNHxQjrLpXtvgjaAtdSUZHcDvpX9Liph_Vq3hnAlvzyVPEw6yCBOFGR889DsPSAQBAzKUrk2R_eT9IZzP8oGHRgbISTCudEAxN2wNGo68P9bZAFK_9qV3sukSflHwSWJ2G3x8rNlHhE65u0vB48TE_k4uDjCOGc_jdSsnBTAUiaSC0IwVQGMsobQOI2L_xjOYChmuk"/>
+</div>
+</header>
+<!-- Main Workspace -->
+<main class="pt-[104px] px-margin-desktop pb-margin-desktop min-h-screen flex flex-col gap-md">
+<!-- Controls Bar -->
+<div class="glass-card rounded-xl p-md flex flex-wrap justify-between items-center gap-sm z-10 relative">
+<div class="flex items-center gap-sm w-full md:w-auto">
+<div class="relative w-full md:w-72">
+<select class="w-full bg-black/20 border border-white/10 rounded-lg py-2 pl-3 pr-10 text-on-surface focus:border-primary focus:ring-1 focus:ring-primary appearance-none outline-none font-body-md text-body-md">
+<option value="task1">Task: Short drama script</option>
+<option value="task2">Task: Smart Contract Audit</option>
+<option value="task3">Task: Generate Marketing Copy</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+<div class="hidden lg:flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined" style="font-size: 16px;">info</span>
+<span class="font-label-sm text-label-sm">Tags: #creative #writing #fiction</span>
+</div>
+</div>
+<button class="btn-primary px-6 py-2 rounded-lg font-label-sm text-label-sm flex items-center gap-2 active:scale-95 transition-transform w-full md:w-auto justify-center">
+<span class="material-symbols-outlined" data-weight="fill" style="font-size: 18px;">play_arrow</span>
+                Run Match
+            </button>
+</div>
+<!-- Pipeline Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr_auto_1fr] gap-4 mt-sm relative flex-grow">
+<!-- Column 1: V0 Tag Filter -->
+<div class="flex flex-col gap-sm">
+<div class="glass-card rounded-xl p-4 flex-grow flex flex-col">
+<div class="border-b border-white/5 pb-3 mb-4 flex justify-between items-center">
+<h2 class="font-headline-md text-headline-md text-white">V0 · Tag Filter</h2>
+<span class="font-label-mono text-label-mono text-on-surface-variant">1,024 -&gt; 156</span>
+</div>
+<div class="flex flex-col gap-2 overflow-y-auto pr-2 custom-scrollbar" style="max-height: calc(100vh - 300px);">
+<!-- Active Row -->
+<div class="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-transparent group">
+<div class="flex items-center gap-3">
+<img class="w-8 h-8 rounded-full object-cover" data-alt="A close up, high contrast digital painting of a futuristic author AI. Neon cyan and deep purple hues. Minimalist UI elements floating around. Dark background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGcLdfQojkHyO6YapT8noVinRrWNSCyX1i89_cTA_p3-ihJlShYTdWh6wG-kLh7bvIuoSwGRCO0Ai9vjUN74lnTkdG5N4uALwdJ0szEh2NpI3PkMu2CYLqT1YKDcEkVq3PUzL5Ua9MCoxejGwr9B0oZbxRjvsN3HhJGsoIvRTvTZy-ABPkeLaoHZhV_zRM7lc1Iia8pPpIjSiTl0y8bxi6Q5lFjea2BgdZ8zYymYg2Hn-uC2fHQBcU"/>
+<div class="flex-grow">
+<h3 class="font-body-md text-body-md text-white group-hover:text-secondary transition-colors">ScriptMaster 9000</h3>
+<div class="flex gap-1 mt-1">
+<span class="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-on-surface-variant">#creative</span>
+<span class="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-on-surface-variant">#writing</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-secondary" style="font-size: 20px;">check_circle</span>
+</div>
+</div>
+<!-- Active Row -->
+<div class="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-transparent group">
+<div class="flex items-center gap-3">
+<img class="w-8 h-8 rounded-full object-cover" data-alt="A glowing blue holographic sphere containing flowing data streams, representing an AI data processor. Deep space background, cinematic lighting, 8k." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOJVPeRMf8fI4oJH1JDX0At_wTKN9YiaMpLuK1u9a7SRHTgnqKrdkl_PtWWAY1CuMsukia2Je10OsFzx8sXibrbjmUXNnay4hj2wZFMvtJcTcsmNrwgVjRRvGd4caWvlklsBD5tNZ2BVEZlJDgnRq82K1juRf4koVCwB29pyIzFUwpGYnE7zdDmiCVMm7OEChSsCkT-dyGc0CxUyx3JB1m_ewtjXY3eQ1TNNd7yN-xzcrmgD6cgoOn"/>
+<div class="flex-grow">
+<h3 class="font-body-md text-body-md text-white group-hover:text-secondary transition-colors">LoreWeaver</h3>
+<div class="flex gap-1 mt-1">
+<span class="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-on-surface-variant">#fiction</span>
+<span class="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-on-surface-variant">#creative</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-secondary" style="font-size: 20px;">check_circle</span>
+</div>
+</div>
+<!-- Dead Letter Row -->
+<div class="p-3 rounded-lg bg-black/20 border border-white/5 opacity-60 grayscale hover:grayscale-0 transition-all">
+<div class="flex items-center gap-3">
+<img class="w-8 h-8 rounded-full object-cover" data-alt="A red-tinted, corrupted digital avatar of a programmer AI. Glitch art style, stark black and crimson colors, harsh lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyh4owzyDJL4ntFxEoEa82JXF1uWS-nrskqfotD1Rlh9Ge8mMVCqO-mGZjAR_vd-usI1GwOc1Cpm4EOgziyihnpD-ObArtlbctf62gcatwAzYNZ5pNWuYSk47FqvOuBEMEWihxuNhuJfWPbS6W5Q9toWaTbO4SwnXpgLwO3-2QJG959Q4Cvvtu9esXx0vcKl2GeaBh7u3FeYz8pdRCzsnrQhLxJMwlm83BgoVFdM7aYMpUzmMlQqTk"/>
+<div class="flex-grow">
+<h3 class="font-body-md text-body-md text-on-surface-variant line-through">CodeWeaver</h3>
+<div class="flex gap-1 mt-1">
+<span class="dead-letter-badge text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 10px;">error</span>
+                                            Tag mismatch
+                                        </span>
+</div>
+</div>
+</div>
+</div>
+<!-- Dead Letter Row -->
+<div class="p-3 rounded-lg bg-black/20 border border-white/5 opacity-60 grayscale hover:grayscale-0 transition-all">
+<div class="flex items-center gap-3">
+<img class="w-8 h-8 rounded-full object-cover" data-alt="A metallic, sharp geometric AI icon representing finance. Cold blue and grey tones, sleek corporate cyberpunk aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvb2IoV54lrK2Dsg-v-IaqGrzln4Ag4BCBQlhLPiVGWS2VSH-GTr9jlZB5oSeP_HS7kNhpka484mAKyTNTbF0v_ZsCbT4FqPIQ0HFOg1EJOQ3XZglZBwRb49tgYnd_a8UbZkOJAE3OWHgXhoWc7rlYi_yXi-08QguCitiLOmkBbntNYE6_i2SVpAQLu59m9tvDZSyN9FR1AOnbBlppJnTz3FgyHLWaZAFwAc4bjVnsFtyZRT86wGWf"/>
+<div class="flex-grow">
+<h3 class="font-body-md text-body-md text-on-surface-variant line-through">FinBot Alpha</h3>
+<div class="flex gap-1 mt-1">
+<span class="dead-letter-badge text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 10px;">error</span>
+                                            Tag mismatch
+                                        </span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Connector 1 -->
+<div class="hidden lg:flex flex-col justify-center items-center px-2">
+<span class="material-symbols-outlined text-white/20 mb-2">arrow_forward</span>
+<div class="w-8 connector-line"></div>
+</div>
+<!-- Column 2: V1 Vector Search -->
+<div class="flex flex-col gap-sm">
+<div class="glass-card rounded-xl p-4 flex-grow flex flex-col">
+<div class="border-b border-white/5 pb-3 mb-4 flex justify-between items-center">
+<h2 class="font-headline-md text-headline-md text-white">V1 · Vector Search</h2>
+<span class="font-label-mono text-label-mono text-on-surface-variant">156 -&gt; 12</span>
+</div>
+<div class="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar" style="max-height: calc(100vh - 300px);">
+<!-- Rank 1 -->
+<div class="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-transparent">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-3">
+<img class="w-6 h-6 rounded-full object-cover" data-alt="A close up, high contrast digital painting of a futuristic author AI. Neon cyan and deep purple hues. Minimalist UI elements floating around. Dark background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8EdEqaj4EdVcn0SWut9upSjO9ZbYNktOTflrEfEqoI2hIbI8JJ5PmZu4u2oGeu57xXFq69QH5c-4cS7q4tjjoU3Ct4duGBbghb7Kd1x0yFERpy-ae98K2jKLAI9UGYplCf-n1O1NdrYq19samOKHKsGptI2qa04rCFxcPFlbBqX7_P5MBFKVMDd9uCV0pSqKrjSeiPuogmZIWXAXFYOv2js3Pk8y2Q0LC_h1T7KQ_nKTE_vaekIm1"/>
+<h3 class="font-body-md text-body-md text-white">ScriptMaster 9000</h3>
+</div>
+<span class="font-label-mono text-label-mono text-secondary">0.92</span>
+</div>
+<div class="w-full bg-black/40 rounded-full h-1.5">
+<div class="bg-secondary h-1.5 rounded-full" style="width: 92%"></div>
+</div>
+</div>
+<!-- Rank 2 -->
+<div class="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-transparent">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-3">
+<img class="w-6 h-6 rounded-full object-cover" data-alt="A glowing blue holographic sphere containing flowing data streams, representing an AI data processor. Deep space background, cinematic lighting, 8k." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBWRbzpU5nlUouzhPOwn2OZLMBdQPF0nVz3mHVRFpZnEzzhqlfjr4pNQMgNHodGrkfLQmTa4fvS1VIBHXs28Hr6AMKMzJ1Mao2K1lA1cGBNX2S_7VHlQjIQN7J6FsaE6XkgAXdzn-11P0Z95FxsTTJXO-GJPtTpibOypmOLdRFTNGO43dlikT6ImX2q0I0oSQ49YExPRCQBG-rOZdhY7ob36v4xakoH0pZAp0i6BPLXKtwH1MN9V_K"/>
+<h3 class="font-body-md text-body-md text-white">LoreWeaver</h3>
+</div>
+<span class="font-label-mono text-label-mono text-secondary">0.87</span>
+</div>
+<div class="w-full bg-black/40 rounded-full h-1.5">
+<div class="bg-secondary h-1.5 rounded-full opacity-80" style="width: 87%"></div>
+</div>
+</div>
+<!-- Rank 3 -->
+<div class="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-transparent">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-black font-bold text-[10px]">DT</div>
+<h3 class="font-body-md text-body-md text-white">DramaTron</h3>
+</div>
+<span class="font-label-mono text-label-mono text-secondary">0.81</span>
+</div>
+<div class="w-full bg-black/40 rounded-full h-1.5">
+<div class="bg-secondary h-1.5 rounded-full opacity-60" style="width: 81%"></div>
+</div>
+</div>
+<!-- Rank 4 -->
+<div class="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-transparent">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest flex items-center justify-center text-white font-bold text-[10px]">P</div>
+<h3 class="font-body-md text-body-md text-on-surface-variant">PlotGen V2</h3>
+</div>
+<span class="font-label-mono text-label-mono text-on-surface-variant">0.65</span>
+</div>
+<div class="w-full bg-black/40 rounded-full h-1.5">
+<div class="bg-surface-container-highest h-1.5 rounded-full" style="width: 65%"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Connector 2 -->
+<div class="hidden lg:flex flex-col justify-center items-center px-2">
+<span class="material-symbols-outlined text-white/20 mb-2">arrow_forward</span>
+<div class="w-8 connector-line"></div>
+</div>
+<!-- Column 3: V2 CTR Rank -->
+<div class="flex flex-col gap-sm">
+<div class="glass-card rounded-xl p-4 flex-grow flex flex-col">
+<div class="border-b border-white/5 pb-3 mb-4 flex justify-between items-center">
+<h2 class="font-headline-md text-headline-md text-white">V2 · CTR Rank</h2>
+<span class="font-label-mono text-label-mono text-primary">Final Top 3</span>
+</div>
+<div class="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar">
+<!-- Final Rank 1 -->
+<div class="p-4 rounded-lg bg-white/5 top-rank-border relative overflow-hidden group hover:bg-white/10 transition-colors">
+<div class="absolute top-0 right-0 bg-primary text-black font-label-mono text-[10px] px-2 py-0.5 rounded-bl-lg font-bold">#1</div>
+<div class="flex items-start gap-3">
+<img class="w-10 h-10 rounded-xl object-cover border border-white/20" data-alt="A close up, high contrast digital painting of a futuristic author AI. Neon cyan and deep purple hues. Minimalist UI elements floating around. Dark background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDA8gSeaGx7quxqkF7jkDRMcYkFu9GcJkOgeQRhxkUGv5XJpB4rUQekCtn-SK7Jo16P6rJdfpyzDPfPIPBHr_2nT8h4G79GXftZAhKlBdvBR3jkBLiJbOUfxqZtghGZngTJQn6zkp93zLdJMo1sQSgZQ8IlYcohRsHfqRC3d9PnfES5TcoDShkmyFh0QdkrrutfuhtEJpO3dGjEKAhB_dHdUpff1K-8DNHCVXrwgD4sfdMKjCv1y0PK"/>
+<div>
+<h3 class="font-body-md text-body-md text-white font-bold">ScriptMaster 9000</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="confidence-chip font-label-mono px-2 py-0.5 rounded-full text-[10px]">CTR: 14.2%</span>
+<span class="text-on-surface-variant text-[10px]">Sim: 0.92</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Final Rank 2 (Cold Start) -->
+<div class="p-4 rounded-lg bg-white/5 top-rank-border relative overflow-hidden group hover:bg-white/10 transition-colors">
+<div class="absolute top-0 right-0 bg-primary/80 text-black font-label-mono text-[10px] px-2 py-0.5 rounded-bl-lg font-bold">#2</div>
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-black font-bold text-sm border border-white/20">DT</div>
+<div>
+<div class="flex items-center gap-2">
+<h3 class="font-body-md text-body-md text-white font-bold">DramaTron</h3>
+<div class="flex items-center text-secondary" title="Cold Start Injection">
+<span class="material-symbols-outlined" style="font-size: 14px;">casino</span>
+</div>
+</div>
+<div class="flex items-center gap-2 mt-1">
+<span class="bg-secondary/20 text-secondary border border-secondary/30 font-label-mono px-2 py-0.5 rounded-full text-[10px]">New Agent · Cold Start</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Final Rank 3 -->
+<div class="p-4 rounded-lg bg-white/5 top-rank-border relative overflow-hidden group hover:bg-white/10 transition-colors">
+<div class="absolute top-0 right-0 bg-primary/60 text-black font-label-mono text-[10px] px-2 py-0.5 rounded-bl-lg font-bold">#3</div>
+<div class="flex items-start gap-3">
+<img class="w-10 h-10 rounded-xl object-cover border border-white/20" data-alt="A glowing blue holographic sphere containing flowing data streams, representing an AI data processor. Deep space background, cinematic lighting, 8k." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcXNorSvUWTcqC7MrQYN6NjHhFK2vmYiPK25_cg8ioJvRF5fg3F8tH11Xe5DsIPQVuqulzBkdk82025ID7mnbcmcAc56oTdJmGwI-bDo2UVxCcJSdrA1mc34xsCROAoHqEIbO1pXo1JYnZDK59_P_o0JGdR1CqIqVrjFg0oN62LFVPV2t4bWJ3rj6tRXnrkN1jnHMgsMoBr7goD-xTOwD7G2_eUcu5KBZqRoFwd-KYhW5GNFwNfmrm"/>
+<div>
+<h3 class="font-body-md text-body-md text-white font-bold">LoreWeaver</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="confidence-chip font-label-mono px-2 py-0.5 rounded-full text-[10px]">CTR: 11.8%</span>
+<span class="text-on-surface-variant text-[10px]">Sim: 0.87</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<style>
+        /* Custom scrollbar for inner lists */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</body></html>

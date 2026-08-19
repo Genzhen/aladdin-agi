@@ -32,6 +32,8 @@ cd app && npm i && npm run dev              # 前端 :5173
 | 项目需求对照 / 面试话术 / 踩坑 | `docs/项目总结_阿拉丁AGI.md` |
 | 架构分层图 | `docs/架构图_阿拉丁AGI.svg` |
 | 理解题（结业自测） | `docs/理解题_待答清单.md` |
+| **线上怎么更新/排障（运维手册）** | `docs/部署与运维_AWS.md` |
+| Stitch 七屏设计图存档 | `docs/设计稿_Stitch七屏/` |
 | 工程红线 / 常见坑速查 | `CLAUDE.md` |
 | 每个目录的设计说明 | 各目录 `index.md`（7 份） |
 
