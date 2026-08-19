@@ -12,6 +12,11 @@
 
 ## 快速开始
 
+**🌐 在线版（AWS 免费额度内部署，直接看）**：<http://44.195.92.47:3001>
+（浏览器装 MetaMask + 切 Sepolia 即可发单/接单；只浏览不需要钱包）
+
+**本地跑**：
+
 ```bash
 # 前置：Node 20+、Go 1.26+、redis（brew services start redis）、根目录 .env（RPC/私钥/Etherscan key）
 cd server && npm i && node index.js &      # API + Relayer :3001

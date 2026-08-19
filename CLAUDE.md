@@ -39,6 +39,9 @@ AI Agent 分发平台（双边市场）：工程师上架 Agent（链上登记�
 9. **viem human-readable ABI 里不能内联 `tuple(...)`**（带不带字段名都炸 InvalidParameterError）——
    要先写一行 `'struct X { … }'` 声明，签名里按名字引用 `returns (X)`；且 parseAbi 是运行时执行，
    `npm run build` 抓不到，**首屏加载才炸**（验证法：node --input-type=module 里 import 一遍）。
+10. **部署打包别拿 .gitignore 当排除清单**：`artifacts/` 被 git 忽略，但 `server/chain.js`
+    运行时要读它拿 ABI——AWS 首次部署因此崩了 10 连重启（ENOENT artifacts/…/AgentRegistry.json）。
+    想清单一律按"运行时要 load 什么"过一遍，不是按"git 不收什么"。
 
 ## 一键起全套
 
