@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+/* 设计稿色板（Stitch 定稿）：深蓝夜空 #0A0F1E / 紫 #8B5CF6 / 青 #22D3EE */
+@theme {
+  --color-night: #0a0f1e;
+  --color-night-2: #111a30;
+  --color-night-3: #1a2745;
+  --color-line: #233250;
+  --color-violet: #8b5cf6;
+  --color-cyan: #22d3ee;
+  --color-mint: #34d399;
+  --color-amber: #fbbf24;
+  --color-rose: #fb7185;
+}
+
+body {
+  background: var(--color-night);
+  color: #e2e8f0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* 细滚动条，配深色主题 */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #233250; border-radius: 4px; }
+::-webkit-scrollbar-track { background: transparent; }

@@ -1,0 +1,22 @@
+# 密钥与本地环境
+.env
+*.env.local
+
+# Node
+node_modules/
+
+# Hardhat 编译产物（可重建）
+cache/
+artifacts/
+
+# 数据（SQLite 库可从链上重建——"链是真相源"的落地）
+server/data/
+
+# 前端构建产物
+app/dist/
+
+# Go 编译产物
+engine-go/engine-go
+
+# 系统杂物
+.DS_Store

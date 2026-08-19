@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 880" font-family="PingFang SC, Microsoft YaHei, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8B5CF6"/>
+    </marker>
+    <marker id="arrC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#22D3EE"/>
+    </marker>
+    <marker id="arrM" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#34D399"/>
+    </marker>
+    <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#FBBF24"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="880" fill="#0A0F1E"/>
+  <text x="600" y="42" text-anchor="middle" fill="#E2E8F0" font-size="26" font-weight="bold">阿拉丁AGI · AI Agent 分发平台架构</text>
+  <text x="600" y="64" text-anchor="middle" fill="#64748B" font-size="12">浏览器 → 后端(Relayer+匹配引擎) → Redis/Go 队列 → Sepolia 三合约 · 绿=HTTP 蓝=读写链 紫=事件同步 橙=队列</text>
+
+  <!-- ── 浏览器层 ── -->
+  <rect x="60" y="90" width="1080" height="120" rx="12" fill="#0D1526" stroke="#233250"/>
+  <text x="80" y="115" fill="#8B5CF6" font-size="14" font-weight="bold">浏览器 app/ :5173（Vite + React 19 + wagmi v2 + Tailwind v4）</text>
+  <g fill="#111A30" stroke="#233250">
+    <rect x="80"  y="130" width="150" height="56" rx="8"/><rect x="245" y="130" width="150" height="56" rx="8"/>
+    <rect x="410" y="130" width="150" height="56" rx="8"/><rect x="575" y="130" width="150" height="56" rx="8"/>
+    <rect x="740" y="130" width="150" height="56" rx="8"/><rect x="905" y="130" width="150" height="56" rx="8"/>
+    <rect x="1070" y="130" width="60" height="56" rx="8"/>
+  </g>
+  <g fill="#CBD5E1" font-size="12" text-anchor="middle">
+    <text x="155" y="153">S1 市场</text><text x="155" y="171" fill="#64748B" font-size="10">Agent 卡片/搜索</text>
+    <text x="320" y="153">S2 详情</text><text x="320" y="171" fill="#64748B" font-size="10">五维评分</text>
+    <text x="485" y="153">S3 发单</text><text x="485" y="171" fill="#64748B" font-size="10">草稿→质押</text>
+    <text x="650" y="153">S4 任务</text><text x="650" y="171" fill="#64748B" font-size="10">stepper/操作</text>
+    <text x="815" y="153">S5 引擎</text><text x="815" y="171" fill="#64748B" font-size="10">三层漏斗</text>
+    <text x="980" y="153">S6/S7</text><text x="980" y="171" fill="#64748B" font-size="10">仲裁/我的</text>
+    <text x="1100" y="160" font-size="18">🦊</text>
+  </g>
+
+  <!-- ── 后端层 ── -->
+  <rect x="60" y="260" width="1080" height="250" rx="12" fill="#0D1526" stroke="#233250"/>
+  <text x="80" y="285" fill="#22D3EE" font-size="14" font-weight="bold">server/ :3001（Express 4 + better-sqlite3 + ethers 6 · 链=真相源 库=可重建缓存）</text>
+
+  <g fill="#111A30" stroke="#233250">
+    <rect x="80"  y="305" width="200" height="80" rx="8"/>
+    <rect x="80"  y="400" width="200" height="80" rx="8"/>
+    <rect x="310" y="305" width="330" height="175" rx="8"/>
+    <rect x="670" y="305" width="200" height="80" rx="8"/>
+    <rect x="670" y="400" width="200" height="80" rx="8"/>
+    <rect x="900" y="305" width="220" height="175" rx="8" stroke="#8B5CF6"/>
+  </g>
+  <g fill="#E2E8F0" font-size="13" font-weight="bold">
+    <text x="92" y="328">REST API</text>
+    <text x="92" y="423">scoring 五维评分</text>
+    <text x="322" y="328">matching/ 三层漏斗（面试核心）</text>
+    <text x="682" y="328">空投记账</text>
+    <text x="682" y="423">queue.js 生产者</text>
+    <text x="912" y="328" fill="#8B5CF6">Relayer（9 事件监听）</text>
+  </g>
+  <g fill="#94A3B8" font-size="11">
+    <text x="92" y="348">agents / tasks / engine</text>
+    <text x="92" y="364">airdrop / internal(token)</text>
+    <text x="92" y="443">质量70 速度15 价格10 响应5</text>
+    <text x="92" y="459">结算自动 updateScore 上链</text>
+    <text x="682" y="348">上架+10 发单+5 完单+20</text>
+    <text x="682" y="364">airdrop_eligible 流水</text>
+    <text x="682" y="443">手写 RESP 编解码</text>
+    <text x="682" y="459">LPUSH queue:match</text>
+    <text x="912" y="348">AgentRegistered / TaskPosted…</text>
+    <text x="912" y="364">双写对账：按 publisher+price</text>
+    <text x="912" y="380">合体草稿 → 入队匹配</text>
+    <text x="912" y="396">启动补账：按链重建库</text>
+  </g>
+  <!-- 漏斗三层 -->
+  <g font-size="12" text-anchor="middle">
+    <rect x="330" y="345" width="90" height="115" rx="6" fill="#22D3EE" fill-opacity="0.12" stroke="#22D3EE" stroke-dasharray="4 3"/>
+    <rect x="435" y="360" width="90" height="100" rx="6" fill="#8B5CF6" fill-opacity="0.12" stroke="#8B5CF6" stroke-dasharray="4 3"/>
+    <rect x="540" y="380" width="85" height="80" rx="6" fill="#34D399" fill-opacity="0.12" stroke="#34D399" stroke-dasharray="4 3"/>
+    <text x="375" y="368" fill="#22D3EE" font-weight="bold">V0 粗召回</text>
+    <text x="375" y="386" fill="#94A3B8" font-size="10">tag/category 硬匹配</text>
+    <text x="375" y="400" fill="#94A3B8" font-size="10">Fisher-Yates 洗牌</text>
+    <text x="375" y="414" fill="#94A3B8" font-size="10">冷启动全量兜底</text>
+    <text x="375" y="432" fill="#64748B" font-size="10">1,024 →</text>
+    <text x="480" y="383" fill="#8B5CF6" font-weight="bold">V1 精排</text>
+    <text x="480" y="400" fill="#94A3B8" font-size="10">手写 TF-IDF</text>
+    <text x="480" y="414" fill="#94A3B8" font-size="10">余弦相似 TopK</text>
+    <text x="480" y="432" fill="#64748B" font-size="10">→ 156 →</text>
+    <text x="582" y="403" fill="#34D399" font-weight="bold">V2 重排</text>
+    <text x="582" y="420" fill="#94A3B8" font-size="10">逻辑回归+SGD</text>
+    <text x="582" y="434" fill="#94A3B8" font-size="10">CTR 在线学习</text>
+    <text x="582" y="452" fill="#64748B" font-size="10">→ 12 → Top3</text>
+  </g>
+
+  <!-- ── 队列层 ── -->
+  <rect x="60" y="560" width="540" height="120" rx="12" fill="#0D1526" stroke="#233250"/>
+  <text x="80" y="585" fill="#FBBF24" font-size="14" font-weight="bold">队列 + Go 分发引擎（零第三方依赖）</text>
+  <g fill="#111A30" stroke="#233250">
+    <rect x="80" y="605" width="160" height="56" rx="8"/>
+    <rect x="260" y="605" width="160" height="56" rx="8"/>
+    <rect x="440" y="605" width="140" height="56" rx="8"/>
+  </g>
+  <g font-size="12" text-anchor="middle">
+    <text x="160" y="628" fill="#E2E8F0">Redis（brew）</text><text x="160" y="645" fill="#64748B" font-size="10">queue:match / :dead</text>
+    <text x="340" y="628" fill="#E2E8F0">engine-go（Go）</text><text x="340" y="645" fill="#64748B" font-size="10">手写 RESP · BRPOP 消费</text>
+    <text x="510" y="628" fill="#E2E8F0">重试+死信</text><text x="510" y="645" fill="#64748B" font-size="10">1s→2s→4s ×3</text>
+  </g>
+
+  <!-- ── 链上层 ── -->
+  <rect x="640" y="560" width="500" height="120" rx="12" fill="#0D1526" stroke="#8B5CF6"/>
+  <text x="660" y="585" fill="#8B5CF6" font-size="14" font-weight="bold">Sepolia 链上（Etherscan 已验证 · evmVersion cancun）</text>
+  <g fill="#111A30" stroke="#233250">
+    <rect x="660" y="605" width="140" height="56" rx="8"/><rect x="815" y="605" width="150" height="56" rx="8"/><rect x="980" y="605" width="140" height="56" rx="8"/>
+  </g>
+  <g font-size="12" text-anchor="middle">
+    <text x="730" y="628" fill="#E2E8F0">MyToken</text><text x="730" y="645" fill="#64748B" font-size="10">MYT·faucet·airdrop</text>
+    <text x="890" y="628" fill="#E2E8F0">AgentRegistry</text><text x="890" y="645" fill="#64748B" font-size="10">上架·score</text>
+    <text x="1050" y="628" fill="#E2E8F0">TaskEscrow ★</text><text x="1050" y="645" fill="#64748B" font-size="10">状态机·托管·仲裁</text>
+  </g>
+
+  <!-- ── 关键流程箭头 ── -->
+  <!-- 浏览器 → 后端 HTTP -->
+  <line x1="250" y1="210" x2="180" y2="303" stroke="#34D399" stroke-width="2" marker-end="url(#arrM)"/>
+  <text x="150" y="250" fill="#34D399" font-size="11">草稿/查询 HTTP</text>
+  <!-- 浏览器 → 链 MetaMask -->
+  <path d="M 1050 210 C 1120 300 1130 480 1090 603" fill="none" stroke="#22D3EE" stroke-width="2" marker-end="url(#arrC)"/>
+  <text x="1098" y="330" fill="#22D3EE" font-size="11">MetaMask 签名</text>
+  <text x="1098" y="346" fill="#64748B" font-size="10">postTask/accept/approve/airdrop</text>
+  <!-- 链 → Relayer 事件 -->
+  <line x1="1000" y1="603" x2="1010" y2="482" stroke="#8B5CF6" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="1016" y="545" fill="#8B5CF6" font-size="11">9 事件订阅</text>
+  <!-- Relayer → queue -->
+  <line x1="770 " y1="482" x2="180" y2="603" stroke="#FBBF24" stroke-width="2" marker-end="url(#arrA)"/>
+  <text x="380" y="545" fill="#FBBF24" font-size="11">TaskPosted → LPUSH 入队</text>
+  <!-- Go → server run-match -->
+  <line x1="330" y1="603" x2="280" y2="510" stroke="#FBBF24" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrA)"/>
+  <text x="238" y="565" fill="#FBBF24" font-size="11">BRPOP → /internal/run-match</text>
+
+  <!-- 底部铭牌 -->
+  <g font-size="11" fill="#64748B">
+    <text x="60" y="730">实跑记录（Sepolia 2026-08-18）：任务#1 approve 全流程 · 任务#2 dispute→Split 裁决 → Agent#1 updateScore=100 上链 · 任务#3 全自动入队匹配（Go 消费）· 伪任务#999 死信验证 · 80 MYT 空投 tx 0x2c04…</text>
+    <text x="60" y="752">金额口径：质押=price+0.1% · 保证金=6% · 仲裁费=0.5%（裁决时从托管扣）· 全部 bps 整数（10/600/50 per 10000）</text>
+    <text x="60" y="774">状态机：Matching → Running → Review → Settled（+Disputed→裁决 / Cancelled 超时兜底 permissionless）</text>
+  </g>
+</svg>
