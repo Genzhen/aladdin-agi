@@ -20,3 +20,6 @@ engine-go/engine-go
 
 # 系统杂物
 .DS_Store
+
+# Cloudflare 隧道凭据（密钥，同 .env 级别）
+cloudflared-tunnel/

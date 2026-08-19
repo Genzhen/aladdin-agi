@@ -12,8 +12,8 @@
 
 ## 快速开始
 
-**🌐 在线版（AWS 免费额度内部署，直接看）**：<http://44.195.92.47:3001>
-（浏览器装 MetaMask + 切 Sepolia 即可发单/接单；只浏览不需要钱包）
+**🌐 在线版（AWS 免费额度内部署，直接看）**：<https://aladdin.myanext.com>
+（Cloudflare 隧道 HTTPS；浏览器装 MetaMask + 切 Sepolia 即可发单/接单；只浏览不需要钱包）
 
 **本地跑**：
 
