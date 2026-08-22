@@ -43,6 +43,10 @@ AI Agent 分发平台（双边市场）：工程师上架 Agent（链上登记�
 10. **部署打包别拿 .gitignore 当排除清单**：`artifacts/` 被 git 忽略，但 `server/chain.js`
     运行时要读它拿 ABI——AWS 首次部署因此崩了 10 连重启（ENOENT artifacts/…/AgentRegistry.json）。
     想清单一律按"运行时要 load 什么"过一遍，不是按"git 不收什么"。
+11. **server 测试用 `node --test`，别 `npx vitest run`**：套件是 node:test 风格，
+    vitest 报 "No test suite found" 白等两分钟。
+12. **rsync 必须显式排除 `server/data` 和 `.env`**：线上库有自己的链下状态
+    （星级/评分/曝光），本地覆盖=丢数据。以前没炸只是 rsync 按 mtime 跳过——运气不是机制。
 
 ## 一键起全套
 
