@@ -15,4 +15,5 @@ module.exports = [
   { file: "xhs-agent.js",          port: 9007, chainName: "小红书文案师" }, // L3 实验体：owner 是第二钱包，自持钥 submit
   { file: "image-agent/server.mjs", port: 9008, chainName: "Pixel Alchemist" }, // Mastra：Agent + 双工具循环（SVG 视觉稿）
   { file: "web-agent/server.mjs",   port: 9009, chainName: "Site Forger" },     // Mastra：Workflow 四步（单文件网站）
+  { file: "novelist-agent.js",     port: 9010, chainName: "网文小说家" },      // 约稿结构写小说开篇（梗概/人物卡/第一章/预告）
 ];

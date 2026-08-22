@@ -1,21 +1,33 @@
 // 钱包连接组件：injected（MetaMask）。连接后展示地址 + MYT 余额 + 水龙头
 import { useAccount, useConnect, useDisconnect, useReadContract, useWriteContract } from 'wagmi'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { ABI, ADDR } from '../lib/contracts'
 import { config } from '../wagmi'
 import { shortAddr } from '../lib/format'
 import { Btn } from './ui'
+
+// ── 交易阶段事件（模块级单例）：TxToast 订阅做全局反馈 ──
+// 点击后到钱包弹窗之间有一段 simulate+estimate 的 RPC 往返（1~3s 无声期），
+// 用户不知道点没点上就会反复点——把每个阶段广播出去，右上角常驻提示条。
+// phase：preparing(模拟+估气) → signing(等钱包确认) → mining(等上链) → done | error
+const txListeners = new Set()
+export const onTxEvent = (fn) => { txListeners.add(fn); return () => txListeners.delete(fn) }
+const emitTx = (phase, label, extra = {}) => txListeners.forEach((fn) => fn({ phase, label, ...extra }))
 
 export function useTx() {
   const { writeContractAsync } = useWriteContract()
   const { address } = useAccount()
   const [pending, setPending] = useState(null) // { hash, doing }
   const [lastError, setLastError] = useState('')
+  const busyRef = useRef(false) // 真防重入：disabled 靠 React 重渲染生效，快速连点能穿透；ref 同步生效
 
-  /** 发交易 → 等确认；返回是否成功（组件层再刷新数据） */
+  /** 发交易 → 等确认；返回是否成功（组件层再刷新数据）。重入（连点）直接吞掉 */
   async function send(contract, functionName, args = {}, label = functionName) {
+    if (busyRef.current) return { ok: false, busy: true }
+    busyRef.current = true
     setLastError('')
     setPending({ hash: null, doing: label })
+    emitTx('preparing', label)
     try {
       if (!address) throw new Error('请先连接钱包')
 
@@ -36,6 +48,7 @@ export function useTx() {
       const estimatedGas = await publicClient.estimateContractGas(txRequest)
       const gas = (estimatedGas * 13n) / 10n // 30% 余量：estimate 与实际打包之间的状态漂移
 
+      emitTx('signing', label) // 预检过了，钱包弹窗该出现了
       const hash = await writeContractAsync({
         address: meta.address,
         abi: meta.abi,
@@ -45,14 +58,20 @@ export function useTx() {
         chainId: targetChainId,
       })
       setPending({ hash, doing: label })
+      emitTx('mining', label, { hash })
       const rc = await waitForTx(hash, targetChainId)
       setPending(null)
+      emitTx('done', label, { hash, ok: rc.status === 'success' })
       return { ok: rc.status === 'success', hash }
     } catch (e) {
       setPending(null)
       console.error(`[tx:${label}]`, e)
-      setLastError(formatTxError(e))
+      const msg = formatTxError(e)
+      setLastError(msg)
+      emitTx('error', label, { error: msg })
       return { ok: false }
+    } finally {
+      busyRef.current = false
     }
   }
   return { send, pending, lastError }

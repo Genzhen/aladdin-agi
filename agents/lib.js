@@ -127,8 +127,11 @@ async function announceLoop(port, agentName) {
 const ROOT = path.join(__dirname, "..");
 
 async function submitSelf(taskId, keyEnv = "XHS_PRIVATE_KEY") {
-  const rawKey = (process.env[keyEnv] || "").replace(/[^0-9a-fA-F]/g, "");
+  // key 归一化：先剥 0x 前缀再清洗（顺序反了会把前缀里的 x 也剥掉，key 多出一位→
+  // invalid BytesLike——坑#21 实录：服务器 .env 带前缀、本地不带，两种都得能吃）
+  const rawKey = (process.env[keyEnv] || "").replace(/^0[xX]/, "").replace(/[^0-9a-fA-F]/g, "");
   if (!rawKey) throw new Error(`${keyEnv} 未配置——执行体没钥匙，无法自签 submit`);
+  if (rawKey.length !== 64) throw new Error(`${keyEnv} 长度 ${rawKey.length} ≠ 64——.env 里 key 形状不对`);
   const { ethers } = require(path.join(ROOT, "node_modules", "ethers")); // 惰性加载：别的 agent 不背这依赖
   const deployed = JSON.parse(fs.readFileSync(path.join(ROOT, "deployed.json"), "utf8"));
   const abi = JSON.parse(

@@ -19,6 +19,7 @@ L3 的 xhs-agent **自持钥自签**——平台退回纯路由。
 | `xhs-agent.js` | 9007 | 小红书文案师（L3 实验体） | DeepSeek 写小红书笔记（emoji 标题/hook/话题标签），**干完活用第二钱包钥匙自签 submit**（`lib.submitSelf`），不再让平台代签 |
 | `image-agent/` | 9008 | #19 Pixel Alchemist | **Mastra Agent + 双工具循环**：LLM 写 SVG（图即文本）→ `checkPalette` WCAG 对比度 + `validateSvg` 结构/安全/配平双确定性工具，不合格打回重修，server 出口再终审；Design 类，前端渲染成图 |
 | `web-agent/` | 9009 | #20 Site Forger | **Mastra Workflow 四步**：plan 架构 → build 整站 → audit 代码审计（零 LLM）→ fix 条件返工（剩余预算 <18s 带病交付）；Coding 类，交付单文件网站，前端 sandbox iframe 预览 |
+| `novelist-agent.js` | 9010 | 网文小说家（待上架） | 约稿结构写小说开篇：DeepSeek 产出一句话梗概 → 人物卡（欲望/短板）→ 第一章 600~900 字（场景+三轮对话+钩子）→ 第二章预告；Writing 类，降级本地三幕模板 |
 | `mastra-shell.mjs` | — | 共用契约壳（ESM） | Mastra 执行体的 HTTP 三端点 + 自报到心跳 + .env 装载；run 处理函数由执行体注入（title-agent 是第一例教学样本，未回迁） |
 | `lib.js` | — | 共用躯干 | 零依赖 HTTP 壳 + DeepSeek `llm()` 通道（50s 超时）+ L3 `submitSelf()` 自签上链，不含业务智能 |
 | `manifest.js` | — | 单一事实源 | 执行体清单（file/port/chainName）：start-all 按它拉起，自报到按它认门牌——链上自增 id 不进工程配置，上架顺序无关 |

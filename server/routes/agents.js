@@ -61,14 +61,31 @@ router.get("/:id", (req, res) => {
   });
 });
 
+/** 探活外部服务地址：GET {endpoint}/health——与 agent-runner 派单用的同一契约。
+ *  结果只如实回告 owner（写入不设门禁，探活失败自己看得见）；匹配/派遣侧
+ *  的"失联即摘出"是另一个生产替换点。⚠️ SSRF：这里会 fetch 任意 URL，
+ *  演示级可接受；生产必须解析后拒绝内网 IP + 域名白名单。 */
+async function probeEndpoint(url) {
+  try {
+    const res = await fetch(new URL("/health", url), { signal: AbortSignal.timeout(4000) });
+    return { reachable: res.ok, detail: `HTTP ${res.status}` };
+  } catch (e) {
+    return { reachable: false, detail: String(e.cause?.code || e.message).slice(0, 80) };
+  }
+}
+
 // POST /api/agents/:id —— 补链下长文本（上架交易已在链上，这里只 enrich）
 // ⚠️ owner 签名鉴权：曾经裸奔（任何人可改任意 Agent 的简介/下架状态）。
-// 前端（Enrich/AutoAccept）用当前钱包签 `aladdin:enrich:${id}:${ts}`，这里
-// recoverAddress 对比 agent.owner。消息绑 agentId 防跨 Agent 盗用、绑时间戳防重放。
+// 前端（Enrich/AutoAccept/EndpointEdit/ListAgent）用当前钱包签
+// `aladdin:enrich:${id}:${ts}`，这里 recoverAddress 对比 agent.owner。
+// 消息绑 agentId 防跨 Agent 盗用、绑时间戳防重放。
+// 可改字段白名单：description / tags / status / autoAccept / endpoint
+// （endpoint=外部商家的服务地址，开放市场形态：平台只认 /health+/run 契约，
+//   实现框架（Mastra/LangChain/裸 HTTP）对平台不可见——A2A 适配器的挂点）。
 // 生产替换点：EIP-712 typed data + 服务端一次性 nonce（当前 ±5min 时间窗是演示级）。
-router.post("/:id", (req, res) => {
+router.post("/:id", async (req, res) => {
   const db = getDb();
-  const { description, tags, status, autoAccept, sig, ts } = req.body;
+  const { description, tags, status, autoAccept, endpoint, sig, ts } = req.body;
   const row = db.prepare("SELECT id, owner FROM agents WHERE id = ?").get(req.params.id);
   if (!row) return res.status(404).json({ error: "agent not found" });
 
@@ -86,6 +103,20 @@ router.post("/:id", (req, res) => {
     return res.status(403).json({ error: `签名者 ${signer} 不是这个 Agent 的 owner` });
   }
 
+  // endpoint 三态：缺省=不动；""=撤下服务；合法 http(s) URL=登记
+  let endpointUrl = null, clearEndpoint = false;
+  if (typeof endpoint === "string" && endpoint.trim()) {
+    try {
+      const u = new URL(endpoint.trim());
+      if (!/^https?:$/.test(u.protocol) || u.href.length > 200) throw new Error("bad");
+      endpointUrl = u.href;
+    } catch {
+      return res.status(400).json({ error: "endpoint 必须是 http(s):// 开头的合法 URL（≤200 字符）" });
+    }
+  } else if (endpoint === "") {
+    clearEndpoint = true;
+  }
+
   db.prepare(`
     UPDATE agents SET
       description = COALESCE(?, description), tags = COALESCE(?, tags),
@@ -96,7 +127,12 @@ router.post("/:id", (req, res) => {
     autoAccept === undefined ? null : (autoAccept ? 1 : 0), // 布尔 → 0/1（SQLite 无布尔）
     req.params.id,
   );
-  res.json({ ok: true, signer });
+  if (endpointUrl || clearEndpoint) {
+    db.prepare("UPDATE agents SET endpoint = ? WHERE id = ?")
+      .run(clearEndpoint ? null : endpointUrl, req.params.id);
+  }
+  const probe = endpointUrl ? await probeEndpoint(endpointUrl) : null;
+  res.json({ ok: true, signer, ...(probe ? { probe } : {}) });
 });
 
 module.exports = router;
