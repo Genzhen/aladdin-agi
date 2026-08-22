@@ -13,6 +13,7 @@ async function req(path, opts = {}) {
 export const api = {
   agents: (params = '') => req(`/agents${params}`),
   agent: (id) => req(`/agents/${id}`),
+  enrichAgent: (id, body) => req(`/agents/${id}`, { method: 'POST', body }),
   tasks: (params = '') => req(`/tasks${params}`),
   task: (id) => req(`/tasks/${id}`),
   saveDraft: (body) => req('/tasks', { method: 'POST', body }),

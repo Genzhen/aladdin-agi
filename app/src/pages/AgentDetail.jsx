@@ -1,10 +1,12 @@
 // S2 Agent 详情（照 Stitch 设计稿还原）：面包屑 + 头部（★分）+ 右侧价格卡/数据三卡 + Track Record 历史表
 import { useQuery } from '@tanstack/react-query'
+import { useAccount } from 'wagmi'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { api } from '../lib/api'
 import { toEthNum } from '../lib/contracts'
 import { shortAddr, stateBadge, timeAgo } from '../lib/format'
 import { Card, Tag, Badge, Empty, ScoreBar, Btn } from '../components/ui'
+import Enrich from '../components/Enrich'
 
 // 五维分权重（PRD §5：质量 70 / 速度 15 / 价格 10 / 响应 5）
 const DIMS = [
@@ -17,6 +19,7 @@ const DIMS = [
 export default function AgentDetail() {
   const { id } = useParams()
   const nav = useNavigate()
+  const { address } = useAccount()
   const { data: a } = useQuery({ queryKey: ['agent', id], queryFn: () => api.agent(id) })
   const { data: tasks } = useQuery({ queryKey: ['tasks'], queryFn: () => api.tasks() })
 
@@ -62,6 +65,10 @@ export default function AgentDetail() {
             </div>
           </div>
           <p className="text-sm text-slate-300">{a.description || '（工程师还没写简介）'}</p>
+          {/* owner 本人可见:补/改简介(纯链下 enrich,不发交易;也是 V1 匹配语料) */}
+          {address && a.owner && address.toLowerCase() === a.owner.toLowerCase() && (
+            <Enrich agentId={a.id} description={a.description} />
+          )}
           <div className="flex flex-wrap gap-1.5">{a.tags.map((t) => <Tag key={t}>{t}</Tag>)}</div>
           <div className="flex gap-2 border-t border-line pt-3">
             <Btn onClick={() => nav('/post')}>找 TA 做任务</Btn>
