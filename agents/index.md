@@ -14,8 +14,20 @@
 | `review-agent.js` | 9003 | #2 CodeWeaver | 10 条静态规则逐行扫代码（空 catch/eval/==/var…），按严重度打审查分 |
 | `contract-agent.js` | 9004 | #15 Contract Guard（待上架） | 9 条合同风险词 + 缺失条款检测（负空间）+ 金额/期限抽数，DeepSeek 逐条解读 |
 | `storyboard-agent.js` | 9005 | #16 Storyboard Mate（待上架） | 时长预算切分（钩子/正文/CTA）+ 台词字数预算（4字/秒），DeepSeek 按预算写口播稿 |
+| `title-agent/` | 9006 | #17 Title Forge（待上架） | **Mastra 框架版**：Agent + seoScore 工具调用循环（LLM 生成 6 标题→工具确定性打分→按分选 Top3），Marketing 类 |
 | `lib.js` | — | 共用躯干 | 零依赖 HTTP 壳 + DeepSeek `llm()` 通道（50s 超时），不含业务智能 |
-| `start-all.js` | — | 一键启动 | 拉起五个服务，Ctrl+C 整组退出 |
+| `start-all.js` | — | 一键启动 | 拉起六个服务，Ctrl+C 整组退出 |
+
+## 框架版 vs 手写版（title-agent 是活教材）
+
+`title-agent/` 用 Mastra（@mastra/core 0.10）实现了和兄弟们**完全相同的平台契约**
+（`POST /run` → `{ok, output, meta}`），平台侧 agent-runner/结算链路零改动——
+"执行体与框架无关"由此实证。两个踩坑记录：
+
+1. **Mastra 0.10 的 `generate(messages, options)` 是位置参数**——官网示例的
+   `generate({prompt})` 是更新版本；传对象会被当成一条 role:undefined 的消息。
+2. 框架的价值在复杂度：工具调用循环（maxSteps）、模型路由（换供应商改两行）、
+   后续要 Memory/Workflow/Evals 时不用换骨架。单轮"收任务→出稿"用不上这些。
 
 ## 为什么这么拆
 

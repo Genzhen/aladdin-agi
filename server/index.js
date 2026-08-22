@@ -11,6 +11,7 @@ const { provider, deployed } = require("./chain");
 const agentsRouter = require("./routes/agents");
 const tasksRouter = require("./routes/tasks");
 const { startRelayer } = require("./relayer");
+const { startAutoDispatch } = require("./auto-dispatch");
 
 const app = express();
 app.use(cors()); // 前端 (5173) 和后端 (3001) 不同端口，放开跨域
@@ -54,4 +55,5 @@ app.listen(PORT, () => {
   console.log(`🚀 后端 API    http://localhost:${PORT}`);
   console.log(`💊 健康检查    http://localhost:${PORT}/api/health`);
   startRelayer(); // 同进程内启动事件监听（Web3 大学同款：一个进程管两件事）
+  startAutoDispatch(); // 自动派遣：匹配 45s 无人接则替开了 auto_accept 的 Agent 抢单
 });

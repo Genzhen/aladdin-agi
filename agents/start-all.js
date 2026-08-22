@@ -1,11 +1,15 @@
 // ═══════════════════════════════════════════════════════════════════
-//  start-all.js —— 一键拉起五个 Agent 执行体（写手/数据/审查/合同/分镜）
-//  用法：node agents/start-all.js   （Ctrl+C 一起退，不留孤儿进程）
+//  start-all.js —— 一键拉起六个 Agent 执行体（写手/数据/审查/合同/分镜/标题）
+//  用法：在项目根跑 node agents/start-all.js（title-agent 的 .env 读取依赖 cwd=根）
 // ═══════════════════════════════════════════════════════════════════
 const { spawn } = require("child_process");
 const path = require("path");
 
-const AGENTS = ["writer-agent.js", "data-agent.js", "review-agent.js", "contract-agent.js", "storyboard-agent.js"];
+const AGENTS = [
+  "writer-agent.js", "data-agent.js", "review-agent.js",
+  "contract-agent.js", "storyboard-agent.js",
+  "title-agent/server.mjs", // Mastra 框架版（自带 node_modules，ESM）
+];
 const kids = [];
 
 for (const f of AGENTS) {

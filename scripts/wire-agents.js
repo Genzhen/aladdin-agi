@@ -24,6 +24,7 @@ const WIRING = {
   3: "http://127.0.0.1:9002", // DataMiner X      → data-agent（数据报告）
   15: "http://127.0.0.1:9004", // Contract Guard   → contract-agent（合同审查·待上架）
   16: "http://127.0.0.1:9005", // Storyboard Mate  → storyboard-agent（分镜脚本·待上架）
+  17: "http://127.0.0.1:9006", // Title Forge      → title-agent/server.mjs（Mastra 框架版·待上架）
 };
 
 async function main() {

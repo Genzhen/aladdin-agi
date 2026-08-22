@@ -61,7 +61,7 @@ export default function ListAgent() {
             <div className="grid grid-cols-2 gap-4">
               <Field label="分类">
                 <select className={inputCls} value={form.category} onChange={set('category')}>
-                  {['Writing', 'Coding', 'Data', 'Translation', 'Design', 'Audio'].map((c) => <option key={c}>{c}</option>)}
+                  {['Writing', 'Coding', 'Data', 'Translation', 'Design', 'Audio', 'Legal', 'Video', 'Marketing'].map((c) => <option key={c}>{c}</option>)}
                 </select>
               </Field>
               <Field label="tags(逗号分隔,V0/V1 匹配的原料)">

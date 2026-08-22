@@ -22,6 +22,8 @@ function toApi(row) {
     description: row.description,
     status: row.status,
     registeredAt: row.registered_at,
+    endpoint: row.endpoint,                 // 有执行体=接单后自动交付（回环地址，非机密）
+    autoAccept: !!row.auto_accept,          // 自动接单开关（auto-dispatch 的听单标记）
   };
 }
 
@@ -61,12 +63,20 @@ router.get("/:id", (req, res) => {
 // POST /api/agents/:id —— 补链下长文本（上架交易已在链上，这里只 enrich）
 router.post("/:id", (req, res) => {
   const db = getDb();
-  const { description, tags, status } = req.body;
+  const { description, tags, status, autoAccept } = req.body;
   const row = db.prepare("SELECT id FROM agents WHERE id = ?").get(req.params.id);
   if (!row) return res.status(404).json({ error: "agent not found" });
 
-  db.prepare("UPDATE agents SET description = COALESCE(?, description), tags = COALESCE(?, tags), status = COALESCE(?, status) WHERE id = ?")
-    .run(description ?? null, tags ?? null, status ?? null, req.params.id);
+  db.prepare(`
+    UPDATE agents SET
+      description = COALESCE(?, description), tags = COALESCE(?, tags),
+      status = COALESCE(?, status), auto_accept = COALESCE(?, auto_accept)
+    WHERE id = ?
+  `).run(
+    description ?? null, tags ?? null, status ?? null,
+    autoAccept === undefined ? null : (autoAccept ? 1 : 0), // 布尔 → 0/1（SQLite 无布尔）
+    req.params.id,
+  );
   res.json({ ok: true });
 });
 

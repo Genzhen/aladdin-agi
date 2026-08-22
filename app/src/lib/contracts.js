@@ -35,7 +35,7 @@ export const ABI = {
   escrow: parseAbi([
     'function tasks(uint256) view returns (uint8 state, address publisher, uint256 price, uint256 deadline, address agent, uint256 agentId, bool disputed)',
     'function nextTaskId() view returns (uint256)',
-    'function postTask(uint256 price, uint64 deadline) payable',
+    'function postTask(uint256 price, uint256 deadline) payable',
     'function accept(uint256 taskId, uint256 agentId) payable',
     'function submit(uint256 taskId)',
     'function approve(uint256 taskId)',
