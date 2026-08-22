@@ -52,7 +52,7 @@ AI Agent 分发平台（双边市场）：工程师上架 Agent（链上登记�
     变量在节点端（订阅轮换/自动选择换了出口），本机与 AWS 都没问题。永久解=服务器 sshd
     加听 443 + 安全组放行 443，一律 `ssh -p 443` / `rsync -e "ssh -p 443 …"`——
     443 是任何代理节点必转的端口（本机 GitHub 走 443 通道是同一道理的先例）。
-14. **struct 的 public mapping 自动 getter 两连坑（JuryCourt 跨合约读 escrow.tasks 踩的）**：
+24. **struct 的 public mapping 自动 getter 两连坑（JuryCourt 跨合约读 escrow.tasks 踩的）**：
     ① 返回**匿名扁平元组**，不能 `Task memory t = escrow.tasks(id)`——只能按位置解构
     `(publisher, agent,, price,,, s) = escrow.tasks(id);`；
     ② **静默丢弃 struct 里的数组成员**（panel/votes/voted 链上直接读不到）——
