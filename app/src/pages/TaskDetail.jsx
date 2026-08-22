@@ -6,6 +6,7 @@ import { toEthNum, depositOf } from '../lib/contracts'
 import { shortAddr, stateBadge, timeAgo, fmtPct } from '../lib/format'
 import { Card, Tag, Badge, Empty, Btn } from '../components/ui'
 import { AcceptPanel } from '../components/AcceptPanel'
+import { ManualDeliverPanel } from '../components/ManualDeliverPanel'
 import { RatePanel } from '../components/RatePanel'
 import { DisputePanel } from '../components/DisputePanel'
 import { Deliverable } from '../components/Deliverable'
@@ -162,6 +163,7 @@ export default function TaskDetail() {
         </div>
         {lastError && <div className="text-xs text-rose">❌ {lastError}</div>}
         <AcceptPanel task={t} onDone={refresh} />
+        <ManualDeliverPanel task={t} onDone={refresh} />
         <RatePanel task={t} onDone={refresh} />
         <DisputePanel task={t} onDone={refresh} />
         <p className="text-[11px] text-slate-500">

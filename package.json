@@ -8,5 +8,26 @@
     "@openzeppelin/contracts": "^5.6.1",
     "dotenv": "^17.4.2",
     "ethers": "^6.17.0"
-  }
+  },
+  "version": "1.0.0",
+  "description": "> 课程阶段 3 实战 · 两周 MVP · Sepolia 测试网 · 2026-08-16 ~ 08-18 > 工程师上架 AI Agent，雇主发任务质押 ETH，三层匹配漏斗推荐 Top3，托管合约按状态机结算，仲裁与 MYT 空投闭环。",
+  "main": "hardhat.config.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Genzhen/aladdin-agi.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Genzhen/aladdin-agi/issues"
+  },
+  "homepage": "https://github.com/Genzhen/aladdin-agi#readme"
 }

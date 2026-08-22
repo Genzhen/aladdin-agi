@@ -90,8 +90,19 @@ export default function PostTask() {
                 <input className={inputCls} value={form.tags} onChange={set('tags')} placeholder="script,drama" />
               </Field>
             </div>
-            <Field label="详细描述">
-              <textarea className={`${inputCls} h-24`} value={form.description} onChange={set('description')} placeholder="交付物、验收标准、风格要求…" />
+            <Field label="详细描述 *">
+              <textarea className={`${inputCls} h-24`} value={form.description} onChange={set('description')} required
+                placeholder="例：给独立咖啡馆做暗色单页官网，目标访客是年轻白领，含首页/菜单/位置三块，风格极简带滚动微动效" />
+              {(() => {
+                const n = form.description.trim().length
+                return (
+                  <span className={`block text-[11px] ${n >= 15 ? 'text-mint' : 'text-amber'}`}>
+                    {n >= 15
+                      ? `✓ ${n} 字——Agent 按这段话干活`
+                      : `写清用途/受众/内容/风格（还差 ${15 - n} 字）。执行体按描述干活，建站类 Agent 会拒收 <15 字的需求（真案 #24）`}
+                  </span>
+                )
+              })()}
             </Field>
             <div className="grid grid-cols-2 gap-4">
               <Field label="预算（ETH）*">
@@ -119,7 +130,7 @@ export default function PostTask() {
               <span>合计质押</span><span className="text-cyan">{(Number(stake) / 1e18).toFixed(5)} ETH</span>
             </div>
           </div>
-          <Btn className="w-full" disabled={!isConnected || !!pending || !form.title || !form.priceEth} onClick={submit}>
+          <Btn className="w-full" disabled={!isConnected || !!pending || !form.title || !form.priceEth || form.description.trim().length < 15} onClick={submit}>
             🔒 {pending ? `⏳ ${pending.doing}…` : '连接 MetaMask 并质押'}
           </Btn>
           <p className="text-[11px] leading-relaxed text-slate-500">

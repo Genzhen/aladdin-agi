@@ -39,13 +39,13 @@ export function Deliverable({ dv }) {
   return (
     <Card className="space-y-2">
       <div className="flex items-center justify-between">
-        <h2 className="font-semibold">📦 交付物 · Agent #{dv.agentId} 的真实产出</h2>
+        <h2 className="font-semibold">{dv.manual ? '🧑‍🔧 手动交付 · 工程师补救的活' : `📦 交付物 · Agent #${dv.agentId} 的真实产出`}</h2>
         <span className="text-[11px] text-slate-500">{timeAgo(dv.createdAt)}</span>
       </div>
 
       {!dv.ok ? (
         <div className="rounded-lg border border-rose/30 bg-rose/10 p-3 text-xs text-rose">
-          ❌ 执行体失败：{dv.error}（任务仍在进行中，工程师可手动交付补救）
+          ❌ 执行体失败：{dv.error}（任务仍在进行中——接单钱包在下方操作区「手动交付补救」）
         </div>
       ) : c.kind === 'svg' ? (
         <div className="space-y-2">

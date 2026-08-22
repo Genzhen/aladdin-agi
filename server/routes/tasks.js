@@ -100,6 +100,7 @@ router.get("/:id", (req, res) => {
       ok: !!d.ok,
       agentId: d.agent_id,
       error: d.error,
+      manual: d.endpoint === "manual", // 工程师手动补救的交付物（非执行体产出）
       createdAt: d.created_at,
       output: locked ? full.slice(0, PREVIEW_CHARS) : full,
       truncated: locked,
@@ -108,6 +109,36 @@ router.get("/:id", (req, res) => {
   }
 
   res.json({ ...toApi(row), events, deliverable });
+});
+
+// POST /api/tasks/:id/manual-deliver —— 工程师手动交付补救（真案 #24 催生）：
+// 执行体因输入护栏拒收（description 太短）或超时未回时，任务卡在 running、
+// 钱锁着——工程师把交付物本体贴进来。链上状态翻转由前端钱包另签 escrow.submit
+// （合约校验 msg.sender==接单者），这里只落链下内容：与 agent-runner 同一张
+// task_results（upsert 覆盖失败记录），详情页 Deliverable 卡自动渲染（SVG 成图/
+// 网站 iframe）。演示级鉴权：body.by 比对接单钱包（生产替换点：签名验证）。
+router.post("/:id/manual-deliver", (req, res) => {
+  const db = getDb();
+  const row = db.prepare("SELECT * FROM tasks WHERE id = ?").get(req.params.id);
+  if (!row) return res.status(404).json({ error: "task not found" });
+  if (row.state !== "running") {
+    return res.status(409).json({ error: `当前状态 ${row.state} 不可交付（须为进行中）` });
+  }
+  const by = String(req.body?.by || "");
+  if (!by || by.toLowerCase() !== String(row.agent_addr || "").toLowerCase()) {
+    return res.status(403).json({ error: "只有接单 Agent 的钱包能手动交付" });
+  }
+  const content = String(req.body?.content || "").trim();
+  if (content.length < 15) {
+    return res.status(400).json({ error: "交付物太短（≥15 字）——总得给雇主看点东西" });
+  }
+  db.prepare(`
+    INSERT INTO task_results (task_id, agent_id, endpoint, ok, output, error, created_at)
+    VALUES (?,?,?,?,?,?,?)
+    ON CONFLICT(task_id) DO UPDATE SET ok=1, output=excluded.output,
+      error='', endpoint=excluded.endpoint, created_at=excluded.created_at
+  `).run(row.id, row.agent_id, "manual", 1, content, "", new Date().toISOString());
+  res.json({ ok: true, hint: "内容已落库——接下来钱包签 escrow.submit 翻转到待验收" });
 });
 
 // POST /api/tasks/:id/rate —— 雇主验收打星（1~5，进五维分的"雇主评分"维）
