@@ -12,7 +12,7 @@
 const hre = require("hardhat");
 const fs = require("fs");
 
-const API = "http://localhost:3001";
+const API = process.env.API_BASE || "http://localhost:3001"; // 线上冒烟：API_BASE=https://aladdin.myanext.com
 
 const DEMOS = [
   {
