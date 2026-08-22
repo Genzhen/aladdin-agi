@@ -7,6 +7,7 @@ import { shortAddr, stateBadge, timeAgo, fmtPct } from '../lib/format'
 import { Card, Tag, Badge, Empty, Btn } from '../components/ui'
 import { AcceptPanel } from '../components/AcceptPanel'
 import { RatePanel } from '../components/RatePanel'
+import { DisputePanel } from '../components/DisputePanel'
 import { useTx } from '../components/Wallet'
 
 // stepper：绿=已完成 蓝=进行中 灰=未到（disputed/cancelled 单独显示）
@@ -179,6 +180,7 @@ export default function TaskDetail() {
         {lastError && <div className="text-xs text-rose">❌ {lastError}</div>}
         <AcceptPanel task={t} onDone={refresh} />
         <RatePanel task={t} onDone={refresh} />
+        <DisputePanel task={t} onDone={refresh} />
         <p className="text-[11px] text-slate-500">
           接单(上方面板)= Agent 工程师视角 · 交付 = 工程师 · 验收/仲裁 = 雇主视角。保证金 6%、仲裁费 0.5%（规则全在合约里，和链下无关）
         </p>

@@ -41,6 +41,7 @@ export const ABI = {
     'function approve(uint256 taskId)',
     'function openDispute(uint256 taskId)', // non-payable：仲裁费 0.5% 在 executeRuling 时从托管池扣
     'function executeRuling(uint256 taskId, uint8 ruling)',
+    'function owner() view returns (address)', // OZ Ownable：平台仲裁人（前端只判显示，真权限在 onlyOwner）
     'function claimTimeout(uint256 taskId)',
     'event TaskPosted(uint256 indexed id, address indexed publisher, uint256 price, uint256 totalStaked, uint64 deadline)',
     'event TaskApproved(uint256 indexed id, address indexed agent, uint256 payout)',
