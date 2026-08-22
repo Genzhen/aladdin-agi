@@ -193,7 +193,7 @@ function startRelayer() {
   escrow.on("TaskRuled", async (id, ruling, arbitrationFee, ev) => {
     const taskId = Number(id);
     const t = db.prepare("SELECT publisher, agent_addr, agent_id FROM tasks WHERE id = ?").get(taskId);
-    db.prepare("UPDATE tasks SET state = 'settled' WHERE id = ?").run(taskId);
+    db.prepare("UPDATE tasks SET state = 'settled', ruling = ? WHERE id = ?").run(Number(ruling), taskId);
     recordEvent(db, taskId, "TaskRuled", ev?.log?.blockNumber, { ruling: Number(ruling) });
     // 裁决=完单的另一种形态：只给胜方记奖励（AgentWins/Split 给工程师，PublisherWins/ Split 给雇主）
     if (Number(ruling) !== 1) creditAirdrop(db, t?.agent_addr, 20, "task_done", taskId);

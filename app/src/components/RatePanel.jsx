@@ -39,6 +39,17 @@ export function RatePanel({ task, onDone }) {
     )
   }
 
+  // 仲裁完结单：除"判 Agent 全款（=交付合格，等同验收）"外不走完整验收，
+  // 不进雇主评分维（后端 rate 接口同款口径，这里只是不渲染入口）
+  if (task.state === 'settled' && task.ruling && task.ruling !== 0) {
+    const label = { 1: '判雇主全退', 2: '各打五十大板 Split' }[task.ruling]
+    return (
+      <div className="flex items-center gap-2 border-t border-line pt-3 text-xs text-slate-500">
+        ⚖️ 仲裁完结单（{label}）——未走完整验收，不进雇主评分维
+      </div>
+    )
+  }
+
   const rate = () => api.rateTask(task.id, stars, address).catch((e) => { throw new Error(e.message) })
 
   const approve = async () => {

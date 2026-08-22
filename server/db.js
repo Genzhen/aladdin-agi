@@ -49,6 +49,7 @@ function initSchema(db) {
       description TEXT DEFAULT '',
       candidates  TEXT DEFAULT '[]',         -- 匹配结果 JSON（第 6 步 V0 写入）
       rating      INTEGER,                   -- 雇主验收星级 1~5（NULL=未评；仲裁单无星）
+      ruling      INTEGER,                   -- 仲裁裁决结果 0=Agent胜 1=雇主胜 2=Split（NULL=正常验收）
       created_at  TEXT
     );
   `);
@@ -162,6 +163,8 @@ function initSchema(db) {
   try { db.exec("ALTER TABLE airdrop_eligible ADD COLUMN tx_hash TEXT"); } catch { }
   // tasks.rating：雇主星级（新列，老库补加；建表语句里已有，新库走不到这行）
   try { db.exec("ALTER TABLE tasks ADD COLUMN rating INTEGER"); } catch { }
+  // tasks.ruling：仲裁裁决结果（评分资格口径的依据，同上老库补加）
+  try { db.exec("ALTER TABLE tasks ADD COLUMN ruling INTEGER"); } catch { }
 }
 
 function getDb() {

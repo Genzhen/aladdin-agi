@@ -28,6 +28,7 @@ function toApi(row) {
     description: row.description,
     candidates: JSON.parse(row.candidates || "[]"),
     rating: row.rating ?? null,      // 雇主星级 1~5（null=未评；仲裁单没有）
+    ruling: row.ruling ?? null,      // 仲裁结果 0=Agent胜 1=雇主胜 2=Split（null=正常验收）
     createdAt: row.created_at,
   };
 }
@@ -125,6 +126,13 @@ router.post("/:id/rate", async (req, res) => {
   if (!row) return res.status(404).json({ error: "task not found" });
   if (!publisher || publisher.toLowerCase() !== row.publisher.toLowerCase()) {
     return res.status(403).json({ error: "只有任务发布者能打分" });
+  }
+  // 评分资格口径：雇主评分维只反映"付了钱、走完验收"的完整交易。
+  // Agent胜(0)=交付被认定合格，等同验收，可评（含补评）；
+  // 雇主胜(1)=款全退没发生购买；Split(2)=付一半且双方有责，星会污染信号——都不评。
+  const RULING_LABEL = { 0: "判 Agent 全款", 1: "判雇主全退", 2: "各打五十大板 Split" };
+  if (row.ruling === 1 || row.ruling === 2) {
+    return res.status(403).json({ error: `仲裁完结单（${RULING_LABEL[row.ruling]}）不走完整验收，不支持雇主评分` });
   }
   if (!["review", "settled"].includes(row.state)) {
     return res.status(400).json({ error: `当前状态 ${row.state} 不可评分（待验收/已结算才行）` });
