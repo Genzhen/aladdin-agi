@@ -4,7 +4,7 @@
 //  监听 TaskEscrow / AgentRegistry 的全部状态迁移事件，实时落库。
 //  （生产版还要加"启动补账"：扫历史块回放事件——结业优化项）
 // ═══════════════════════════════════════════════════════════════════
-const { registry, escrow, court } = require("./chain");
+const { provider, registry, escrow, court } = require("./chain");
 const { getDb } = require("./db");
 const { enqueue } = require("./queue");
 const { dispatch } = require("./matching");
@@ -85,6 +85,40 @@ async function backfillAgents(db) {
     if (agentWon) creditAirdrop(db, t.agent_addr, 20, "task_done", t.id);
   }
   if (done.length) log("Backfill", `settled tasks ×${done.length} 完单奖励已补记账`);
+}
+
+/**
+ * 启动补账（法庭事件）：老代码没挂法庭监听的窗口期（部署 jury 之前线上跑着），
+ * CaseOpened/VoteCast/CaseRuled 会缺——照链回放补齐。幂等键 = (task_id, name, block)：
+ * 同一链上事件只会有一行；实时候选行也是同一个 block，天然去重。
+ */
+async function backfillCourtEvents(db) {
+  if (!court) return;
+  const head = await provider.getBlockNumber();
+  const from = Math.max(0, head - 40_000); // publicnode 单次 getLogs 上限 5 万块，留余量
+  const seen = new Set(
+    db.prepare("SELECT task_id, name, block FROM task_events WHERE name IN ('CaseOpened','VoteCast','CaseRuled')")
+      .all().map((r) => `${r.task_id}|${r.name}|${r.block}`)
+  );
+  const argOf = (name, a) =>
+    name === "CaseOpened" ? { panel: [...a.panel], voteEnds: String(a.voteEnds) }
+    : name === "VoteCast" ? { juror: lo(a.juror), vote: Number(a.vote) }
+    : { ruling: Number(a.ruling), winnerCount: Number(a.winnerCount), slashedCount: Number(a.slashedCount) };
+  let added = 0;
+  for (const name of ["CaseOpened", "VoteCast", "CaseRuled"]) {
+    for (const ev of await court.queryFilter(court.getEvent(name), from, head)) {
+      const taskId = Number(ev.args.taskId);
+      const block = ev.log.blockNumber;
+      if (seen.has(`${taskId}|${name}|${block}`)) continue;
+      const args = JSON.stringify(argOf(name, ev.args), (k, v) => (typeof v === "bigint" ? String(v) : v));
+      const ts = ev.log.timestamp ? new Date(ev.log.timestamp * 1000).toISOString() : now();
+      db.prepare("INSERT INTO task_events (task_id, name, block, args, created_at) VALUES (?,?,?,?,?)")
+        .run(taskId, name, block, args, ts);
+      seen.add(`${taskId}|${name}|${block}`);
+      added += 1;
+    }
+  }
+  if (added) log("Backfill", `法庭事件 ×${added} 已按链回放补齐`);
 }
 
 function startRelayer() {
@@ -246,6 +280,7 @@ function startRelayer() {
 
   // 启动即对一次账（不阻塞监听；失败只告警不崩——事件监听还在，实时数据不丢）
   backfillAgents(db).catch((e) => console.error("⚠️ [Relayer] 启动补账失败：", e.message));
+  backfillCourtEvents(db).catch((e) => console.error("⚠️ [Relayer] 法庭事件补账失败：", e.message));
 }
 
 module.exports = { startRelayer };
