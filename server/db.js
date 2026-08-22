@@ -12,11 +12,8 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
 let db = null;
 
-function getDb() {
-  if (db) return db;
-
-  db = new Database(path.join(DATA_DIR, "aladdin.db"));
-  db.pragma("journal_mode = WAL"); // WAL 模式：读写不互斥，并发更顺
+/** 建全部表 + 手写迁移。独立导出：单测用内存库跑同一份 schema */
+function initSchema(db) {
 
   // ── agents：Agent 档案（主记录来自链上 AgentRegistered 事件，长文本由 enrich 接口补）──
   db.exec(`
@@ -51,6 +48,7 @@ function getDb() {
       tags        TEXT DEFAULT '',
       description TEXT DEFAULT '',
       candidates  TEXT DEFAULT '[]',         -- 匹配结果 JSON（第 6 步 V0 写入）
+      rating      INTEGER,                   -- 雇主验收星级 1~5（NULL=未评；仲裁单无星）
       created_at  TEXT
     );
   `);
@@ -129,6 +127,10 @@ function getDb() {
   // agents.endpoint：执行体地址（链下"店面装修"，不上链）。空串=纯挂牌无执行体
   try { db.exec("ALTER TABLE agents ADD COLUMN endpoint TEXT DEFAULT ''"); } catch { }
 
+  // agents.auto_accept：自动接单开关（链下 enrich 可改）。开着=平台在"匹配完成
+  // 45s 无人手动接"时替它代签 accept——对应真实市场的"司机听单"模式
+  try { db.exec("ALTER TABLE agents ADD COLUMN auto_accept INTEGER DEFAULT 0"); } catch { }
+
   // ── airdrop_eligible：空投待发名单（第 11 步：上架10/发单5/完单20 MYT）──
   db.exec(`
     CREATE TABLE IF NOT EXISTS airdrop_eligible (
@@ -146,8 +148,17 @@ function getDb() {
   // SQLite 没有 ADD COLUMN IF NOT EXISTS——报错=已加过，吞掉即可（手写迁移）
   try { db.exec("ALTER TABLE airdrop_eligible ADD COLUMN sent_at TEXT"); } catch { }
   try { db.exec("ALTER TABLE airdrop_eligible ADD COLUMN tx_hash TEXT"); } catch { }
+  // tasks.rating：雇主星级（新列，老库补加；建表语句里已有，新库走不到这行）
+  try { db.exec("ALTER TABLE tasks ADD COLUMN rating INTEGER"); } catch { }
+}
 
+function getDb() {
+  if (db) return db;
+
+  db = new Database(path.join(DATA_DIR, "aladdin.db"));
+  db.pragma("journal_mode = WAL"); // WAL 模式：读写不互斥，并发更顺
+  initSchema(db);
   return db;
 }
 
-module.exports = { getDb };
+module.exports = { getDb, initSchema };

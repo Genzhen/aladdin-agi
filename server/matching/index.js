@@ -3,7 +3,7 @@
 //
 //  漏斗形状（S5 页面的数据源，对应课堂话术 1,024 → 156 → 12 → 展示 3）：
 //    V0 tag/category 粗召回（便宜，宁多勿漏，洗牌保公平）
-//    V1 TF-IDF 余弦精排（文本相似度，砍掉不相关的）
+//    V1 精排（embedding 远程引擎优先，降级本地 TF-IDF 余弦；砍掉不相关的）
 //    V2 逻辑回归 CTR 重排（预估点击率，取 Top3 给雇主看）
 //
 //  副作用：candidates 写回 tasks 表、曝光写 impressions 表、
@@ -12,6 +12,7 @@
 const v0 = require("./v0");
 const v1 = require("./v1");
 const v2 = require("./v2");
+const embed = require("./embed");
 
 const now = () => new Date().toISOString();
 const asTask = (row) => ({
@@ -49,8 +50,12 @@ function reasons(f, task, coldStart) {
   return r;
 }
 
-/** 单次分发：跑完整漏斗并落库。candidates 为空 → 记死信返回 dead（第 9 步队列还有第二层死信） */
-function dispatch(db, taskId) {
+/**
+ * 单次分发：跑完整漏斗并落库。candidates 为空 → 记死信返回 dead（第 9 步队列还有第二层死信）。
+ * async：V1 优先走远程 embedding（一次 API 调用批量向量化），未配置/失败降级本地 TF-IDF——
+ * 引擎与降级原因写进 report.layers.v1.engine，S5 可观测。
+ */
+async function dispatch(db, taskId) {
   const row = db.prepare("SELECT * FROM tasks WHERE id = ?").get(taskId);
   if (!row) throw new Error("task not found");
   const task = asTask(row);
@@ -72,10 +77,28 @@ function dispatch(db, taskId) {
     return report;
   }
 
-  // ── V1 TF-IDF 精排 ──
-  const sims = v1.rank(task, candidates);
+  // ── V1 精排：远程 embedding 优先，未配置/超时/报错 → 自动降级本地 TF-IDF ──
+  let sims = null;
+  report.layers.v1 = { in: candidates.length };
+  if (embed.available()) {
+    try {
+      const vecs = await embed.embedTexts([v1.taskText(task), ...candidates.map(v1.agentText)]);
+      const [qv, ...avs] = vecs;
+      sims = candidates
+        .map((a, i) => ({ agentId: a.id, sim: embed.denseCosine(qv, avs[i]) }))
+        .sort((x, y) => y.sim - x.sim);
+      report.layers.v1.engine = `embedding:${process.env.EMBEDDING_MODEL}`;
+    } catch (e) {
+      report.layers.v1.engine = "tfidf";
+      report.layers.v1.fallback = `embedding 不可用已降级（${e.message}），熔断 5 分钟`;
+    }
+  } else {
+    report.layers.v1.engine = "tfidf";
+  }
+  if (!sims) sims = v1.rank(task, candidates);
   const simById = new Map(sims.map((s) => [s.agentId, s.sim]));
-  report.layers.v1 = { in: candidates.length, out: sims.length, top: sims[0] };
+  report.layers.v1.out = sims.length;
+  report.layers.v1.top = sims[0];
 
   // ── V2 CTR 重排 ──
   const weights = loadWeights(db);

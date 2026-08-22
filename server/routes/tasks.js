@@ -6,6 +6,7 @@
 const express = require("express");
 const { ethers } = require("ethers");
 const { getDb } = require("../db");
+const { rescore } = require("../admin");
 
 const router = express.Router();
 
@@ -26,6 +27,7 @@ function toApi(row) {
     tags: row.tags ? row.tags.split(",").filter(Boolean) : [],
     description: row.description,
     candidates: JSON.parse(row.candidates || "[]"),
+    rating: row.rating ?? null,      // 雇主星级 1~5（null=未评；仲裁单没有）
     createdAt: row.created_at,
   };
 }
@@ -105,6 +107,43 @@ router.get("/:id", (req, res) => {
   }
 
   res.json({ ...toApi(row), events, deliverable });
+});
+
+// POST /api/tasks/:id/rate —— 雇主验收打星（1~5，进五维分的"雇主评分"维）
+// 时序约定：前端先调这里再签链上 approve——TaskApproved 事件到达时星级已在库，
+// relayer 的 rescore 立刻能算进综合分。漏了没打（直接在钱包签的）也可 settled 后补评，
+// 补评路由里再触发一次 rescore。只能评一次（防自刷）；仲裁单雇主没资格评（款没付）。
+router.post("/:id/rate", async (req, res) => {
+  const db = getDb();
+  const { rating, publisher } = req.body || {};
+  const stars = Number(rating);
+
+  if (!Number.isInteger(stars) || stars < 1 || stars > 5) {
+    return res.status(400).json({ error: "rating 必须是 1~5 的整数" });
+  }
+  const row = db.prepare("SELECT * FROM tasks WHERE id = ?").get(req.params.id);
+  if (!row) return res.status(404).json({ error: "task not found" });
+  if (!publisher || publisher.toLowerCase() !== row.publisher.toLowerCase()) {
+    return res.status(403).json({ error: "只有任务发布者能打分" });
+  }
+  if (!["review", "settled"].includes(row.state)) {
+    return res.status(400).json({ error: `当前状态 ${row.state} 不可评分（待验收/已结算才行）` });
+  }
+  if (row.rating != null) {
+    return res.status(400).json({ error: `已评过 ${row.rating} 星（一单一评，防刷）` });
+  }
+  if (!row.agent_id) {
+    return res.status(400).json({ error: "任务还没有 Agent 接单，没有评分对象" });
+  }
+
+  db.prepare("UPDATE tasks SET rating = ? WHERE id = ?").run(stars, row.id);
+
+  // 补评场景（事件早过了，rescore 没吃到这颗星）→ 现在重算一次；
+  // review 态不用：马上要 approve，事件回调会 rescore，别重复上链
+  if (row.state === "settled") {
+    await rescore(db, row.agent_id);
+  }
+  res.json({ ok: true, taskId: row.id, rating: stars });
 });
 
 module.exports = router;

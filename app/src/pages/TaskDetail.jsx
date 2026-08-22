@@ -1,11 +1,12 @@
 // S4 任务详情：状态 stepper + 事件时间线 + 候选推荐（可点击喂 CTR）+ 角色操作
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
-import { useState } from 'react'
 import { api } from '../lib/api'
 import { toEthNum, depositOf } from '../lib/contracts'
 import { shortAddr, stateBadge, timeAgo, fmtPct } from '../lib/format'
 import { Card, Tag, Badge, Empty, Btn } from '../components/ui'
+import { AcceptPanel } from '../components/AcceptPanel'
+import { RatePanel } from '../components/RatePanel'
 import { useTx } from '../components/Wallet'
 
 // stepper：绿=已完成 蓝=进行中 灰=未到（disputed/cancelled 单独显示）
@@ -20,7 +21,6 @@ export default function TaskDetail() {
   const { id } = useParams()
   const qc = useQueryClient()
   const { send, pending, lastError } = useTx()
-  const [agentIdInput, setAgentIdInput] = useState('1')
 
   const { data: t } = useQuery({ queryKey: ['task', id], queryFn: () => api.task(id) })
   if (!t) return <Empty>加载中…</Empty>
@@ -109,7 +109,7 @@ export default function TaskDetail() {
             t.candidates.map((c) => (
               <div key={c.agentId} className="rounded-lg border border-line bg-night/50 p-3">
                 <div className="mb-1 flex items-center justify-between">
-                  <span className="text-sm font-medium">#{c.position} {c.name}</span>
+                  <span className="text-sm font-medium">Agent#{c.agentId} {c.name}<span className="ml-1.5 text-[11px] font-normal text-slate-500">· 推荐第{c.position}名</span></span>
                   <span className="text-xs text-slate-500">pCTR {fmtPct(c.pctr)} · sim {c.sim.toFixed(2)}</span>
                 </div>
                 <div className="mb-2 flex flex-wrap gap-1">{(c.reasons || []).map((r) => <Tag key={r}>{r}</Tag>)}</div>
@@ -172,22 +172,15 @@ export default function TaskDetail() {
       <Card className="space-y-3">
         <h2 className="font-semibold">操作（当前钱包什么角色就点什么）</h2>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="flex items-center gap-1.5 text-xs text-slate-400">
-            Agent#<input className="w-14 rounded border border-line bg-night px-1.5 py-0.5 text-xs" value={agentIdInput} onChange={(e) => setAgentIdInput(e.target.value)} />
-          </span>
-          {act(`接单(锁 ${(Number(depositOf(BigInt(t.priceWei))) / 1e18).toFixed(4)} ETH 保证金)`, () =>
-            send('escrow', 'accept', {
-              args: [BigInt(t.id), BigInt(agentIdInput || 1)],
-              value: depositOf(BigInt(t.priceWei)),
-            }, `接单(锁 ${(Number(depositOf(BigInt(t.priceWei))) / 1e18).toFixed(4)} ETH 保证金)`))}
           {act('交付 (submit)', () => send('escrow', 'submit', { args: [BigInt(t.id)] }, '交付 (submit)'))}
-          {act('✅ 验收打款 (approve)', () => send('escrow', 'approve', { args: [BigInt(t.id)] }, '✅ 验收打款 (approve)'))}
           {act('⚠️ 开仲裁（0.5% 仲裁费裁决时从托管扣）', () =>
             send('escrow', 'openDispute', { args: [BigInt(t.id)] }, '⚠️ 开仲裁（0.5% 仲裁费裁决时从托管扣）'))}
         </div>
         {lastError && <div className="text-xs text-rose">❌ {lastError}</div>}
+        <AcceptPanel task={t} onDone={refresh} />
+        <RatePanel task={t} onDone={refresh} />
         <p className="text-[11px] text-slate-500">
-          接单 = Agent 工程师视角 · 交付 = 工程师 · 验收/仲裁 = 雇主视角。保证金 6%、仲裁费 0.5%（规则全在合约里，和链下无关）
+          接单(上方面板)= Agent 工程师视角 · 交付 = 工程师 · 验收/仲裁 = 雇主视角。保证金 6%、仲裁费 0.5%（规则全在合约里，和链下无关）
         </p>
       </Card>
     </div>

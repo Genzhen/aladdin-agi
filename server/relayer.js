@@ -8,8 +8,7 @@ const { registry, escrow } = require("./chain");
 const { getDb } = require("./db");
 const { enqueue } = require("./queue");
 const { dispatch } = require("./matching");
-const { updateScoreOnchain } = require("./admin");
-const { computeDims } = require("./scoring");
+const { rescore } = require("./admin");
 const { handleAccepted } = require("./agent-runner");
 
 const now = () => new Date().toISOString();
@@ -28,23 +27,11 @@ function creditAirdrop(db, addr, amount, reason, refId) {
   }
 }
 
-/** 结算后重算五维分：先落库（前端立即可见）再上链 updateScore（权威分） */
-async function rescore(db, agentId) {
-  if (!agentId) return;
-  const dims = computeDims(db, agentId);
-  if (!dims) return;
-  db.prepare("UPDATE agents SET score = ? WHERE id = ?").run(dims.score, agentId);
-  log("Score", `Agent#${agentId} 五维综合 ${dims.score}（${dims.note}）`);
-  try {
-    await updateScoreOnchain(agentId, dims.score);
-  } catch (e) {
-    console.error("⚠️ [admin] updateScore 上链失败（库里已有分，重启补账会再试）:", e.shortMessage || e.message);
-  }
-}
-
 function log(name, extra = "") {
   console.log(`🔁 [Relayer] ${name} ${extra}`);
 }
+
+// 五维重算 rescore 已挪到 admin.js：relayer 的结算事件回调与 routes/tasks 的补评接口共用
 
 /** 记一条事件流水 */
 function recordEvent(db, taskId, name, block, args) {
@@ -154,7 +141,7 @@ function startRelayer() {
       log("Enqueue", `任务#${taskId} 已入匹配队列（等 Go 引擎消费）`);
     } catch {
       log("Enqueue", `队列不可用，任务#${taskId} 降级为同步分发`);
-      try { dispatch(db, taskId); } catch { /* 匹配失败已有 match_runs 记录 */ }
+      try { await dispatch(db, taskId); } catch { /* 匹配失败已有 match_runs 记录 */ }
     }
   });
 

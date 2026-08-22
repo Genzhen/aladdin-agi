@@ -91,3 +91,40 @@ test("V2：在线学习——点一次，该特征方向权重上调", () => {
   const after = v2.predict(w1, x);
   assert.ok(after > before, "点击后同特征预估 CTR 应上升");
 });
+
+// ── V1 中文分词 + embedding 双引擎 ──
+const embed = require("../matching/embed");
+
+test("V1：中文分词——单字召回 + 双字精度（原版中文全丢，已修）", () => {
+  const t = v1.tokenize("写短剧脚本");
+  // 双字：短剧/脚本（词级精度）
+  assert.ok(t.includes("短剧") && t.includes("脚本"), `bigram 缺失: ${t}`);
+  // 单字：剧/本（"剧本"与"脚本"靠共享字建立联系）
+  assert.ok(t.includes("剧") && t.includes("本"), `unigram 缺失: ${t}`);
+  // 英文照旧（顺序是实现细节，排序后比）
+  assert.deepEqual(
+    [...v1.tokenize("GPT-4o 很强")].sort(),
+    ["gpt", "4o", "很", "强", "很强"].sort()
+  );
+});
+
+test("V1：中文跨表述——'写短剧脚本'的任务能召回'剧本创作'的 Agent", () => {
+  // tag 全不沾边（V0 靠 coldStart 兜底），全凭描述文本的中文重合度：
+  // 剧本/脚本 共享"剧""本"两字 → sim > 0；对照纯英文 Agent → sim = 0
+  const task = { title: "写短剧脚本", category: "Video", tags: [], description: "60 秒带货短剧", priceWei: "1" };
+  const playwright = { id: 1, name: "编剧之家", category: "Writing", tags: ["essay"], description: "专注剧本创作与分镜", priceWei: "1" };
+  const coder = { id: 2, name: "Solidity Auditor", category: "Coding", tags: ["audit"], description: "smart contract security review", priceWei: "1" };
+  const ranked = v1.rank(task, [playwright, coder]);
+  const byId = Object.fromEntries(ranked.map((r) => [r.agentId, r.sim]));
+  assert.ok(byId[1] > 0, "中文跨表述应产生相似度（剧/本 共享字）");
+  assert.equal(byId[2], 0, "纯英文无关 Agent 应为 0");
+});
+
+test("V1 远程引擎：denseCosine 数学性质 + 未配置时 available()=false", () => {
+  const a = [1, 0, 0], b = [2, 0, 0], c = [0, 3, 0];
+  assert.ok(Math.abs(embed.denseCosine(a, b) - 1) < 1e-9, "同向=1");
+  assert.equal(embed.denseCosine(a, c), 0, "正交=0");
+  assert.equal(embed.denseCosine([0, 0], [0, 0]), 0, "零向量=0（不 NaN）");
+  // 测试进程不配 EMBEDDING_* 环境变量 → 永远走本地引擎（CI 不依赖外网）
+  assert.equal(embed.available(), false);
+});

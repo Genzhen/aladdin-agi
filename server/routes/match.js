@@ -9,9 +9,9 @@ const { dispatch, recordClick } = require("../matching");
 
 const router = express.Router();
 
-router.post("/:id/dispatch", (req, res) => {
+router.post("/:id/dispatch", async (req, res) => {
   try {
-    const report = dispatch(getDb(), Number(req.params.id));
+    const report = await dispatch(getDb(), Number(req.params.id));
     res.json(report);
   } catch (e) {
     res.status(400).json({ error: e.message });

@@ -7,13 +7,15 @@ import { toEthNum } from '../lib/contracts'
 import { shortAddr, stateBadge, timeAgo } from '../lib/format'
 import { Card, Tag, Badge, Empty, ScoreBar, Btn } from '../components/ui'
 import Enrich from '../components/Enrich'
+import AutoAccept from '../components/AutoAccept'
 
-// 五维分权重（PRD §5：质量 70 / 速度 15 / 价格 10 / 响应 5）
+// 五维分权重（PRD §5：完成 70 / 雇主评分 15 / 沟通 10 / 争议 2.5 / 规模 2.5）
 const DIMS = [
-  ['quality', '质量', 70],
-  ['speed', '速度', 15],
-  ['price', '价格竞争力', 10],
-  ['resp', '响应度', 5],
+  ['completion', '完成强度', 70],
+  ['rating', '雇主评分', 15],
+  ['resp', '沟通响应', 10],
+  ['dispute', '争议率', 2.5],
+  ['scale', '历史规模', 2.5],
 ]
 
 export default function AgentDetail() {
@@ -25,14 +27,14 @@ export default function AgentDetail() {
 
   if (!a) return <Empty>加载中…</Empty>
   const myTasks = (tasks || []).filter((t) => t.agentId === a.id)
-  const dims = a.scoreDims && a.scoreDims.quality != null ? a.scoreDims : null
+  const dims = a.scoreDims && a.scoreDims.completion != null ? a.scoreDims : null
   // 数据三卡（设计稿 Agent Score / Completion / Quality）：全部由真实历史算出，没历史就显示 –
   const settled = myTasks.filter((t) => t.state === 'settled').length
   const completion = myTasks.length ? Math.round((settled / myTasks.length) * 100) : null
   const stats = [
     { label: 'Agent Score', value: (a.score / 100).toFixed(2), hint: '链上信用分' },
     { label: 'Completion', value: completion == null ? '–' : `${completion}%`, hint: `${settled}/${myTasks.length} 单结算` },
-    { label: 'Quality', value: dims ? (dims.quality / 100).toFixed(2) : '–', hint: '五维·质量项' },
+    { label: 'Rating', value: dims ? (dims.rating / 20).toFixed(1) : '–', hint: '五维·雇主星级' },
   ]
 
   return (
@@ -65,9 +67,12 @@ export default function AgentDetail() {
             </div>
           </div>
           <p className="text-sm text-slate-300">{a.description || '（工程师还没写简介）'}</p>
-          {/* owner 本人可见:补/改简介(纯链下 enrich,不发交易;也是 V1 匹配语料) */}
+          {/* owner 本人可见:补/改简介 + 自动接单开关(纯链下 enrich,不发交易) */}
           {address && a.owner && address.toLowerCase() === a.owner.toLowerCase() && (
-            <Enrich agentId={a.id} description={a.description} />
+            <div className="flex flex-wrap items-center gap-2">
+              <Enrich agentId={a.id} description={a.description} />
+              <AutoAccept agentId={a.id} enabled={a.autoAccept} hasEndpoint={!!a.endpoint} />
+            </div>
           )}
           <div className="flex flex-wrap gap-1.5">{a.tags.map((t) => <Tag key={t}>{t}</Tag>)}</div>
           <div className="flex gap-2 border-t border-line pt-3">
@@ -143,7 +148,7 @@ export default function AgentDetail() {
                       </td>
                       <td className="px-4 py-2.5 text-slate-300">{toEthNum(t.priceWei)} ETH</td>
                       <td className="px-4 py-2.5">{ok ? '✅' : '⏳'} <Badge cls={sb.cls}>{sb.label}</Badge></td>
-                      <td className="px-4 py-2.5 text-right text-slate-400">{ok ? '★ ' + (a.score / 100).toFixed(2) : '–'}</td>
+                      <td className="px-4 py-2.5 text-right text-amber">{t.rating ? '★'.repeat(t.rating) : '–'}</td>
                     </tr>
                   )
                 })}

@@ -9,6 +9,7 @@ const fs = require("fs");
 const path = require("path");
 const { ethers } = require("ethers");
 const { provider, deployed } = require("./chain");
+const { computeDims } = require("./scoring");
 
 const raw = (process.env.PRIVATE_KEY || "").replace(/[^0-9a-fA-F]/g, "");
 if (!raw) {
@@ -56,4 +57,39 @@ async function submitOnchain(taskId) {
   return rc;
 }
 
-module.exports = { updateScoreOnchain, submitOnchain, adminAddress: signer ? signer.address : null };
+/**
+ * 代签 accept：替开了"自动接单"的 Agent 锁保证金接单（auto-dispatch 调用）。
+ * 保证金从部署钱包垫付——演示里所有 Agent owner 都是这把钱包，验收后随货款
+ * 回同一地址，资金自洽。生产替换点：Agent 服务自己持钥接单，平台只做撮合。
+ */
+async function acceptOnchain(taskId, agentId, priceWei) {
+  if (!escrowWriter) throw new Error("admin signer 未配置，无法代签 accept");
+  const bps = BigInt(await escrowWriter.DEPOSIT_BPS()); // 6%——以链上常量为准
+  const deposit = (BigInt(priceWei) * bps) / 10_000n;
+  const tx = await escrowWriter.accept(taskId, agentId, { value: deposit });
+  const rc = await tx.wait();
+  console.log(`📥 [admin] accept 任务#${taskId} → Agent#${agentId}（锁 ${ethers.formatEther(deposit)} ETH，tx ${rc.hash}）`);
+  return rc;
+}
+
+/**
+ * 结算后重算五维分：先落库（前端立即可见）再上链 updateScore（权威分）。
+ * 从 relayer 挪到这里：relayer 的事件回调和 routes/tasks 的补评接口都要调，
+ * 而 admin 是两者共同的"特权签名"依赖，放这儿没有循环依赖。
+ * 上链失败不抛：库里已有分，重启补账会再试（链是真相源）。
+ */
+async function rescore(db, agentId) {
+  if (!agentId) return;
+  const dims = computeDims(db, agentId);
+  if (!dims) return;
+  db.prepare("UPDATE agents SET score = ? WHERE id = ?").run(dims.score, agentId);
+  console.log(`🧮 [admin] Agent#${agentId} 五维综合 ${dims.score}（${dims.note}）`);
+  try {
+    await updateScoreOnchain(agentId, dims.score);
+  } catch (e) {
+    console.error("⚠️ [admin] updateScore 上链失败（库里已有分，重启补账会再试）:", e.shortMessage || e.message);
+  }
+  return dims;
+}
+
+module.exports = { updateScoreOnchain, submitOnchain, acceptOnchain, rescore, adminAddress: signer ? signer.address : null };

@@ -19,6 +19,7 @@ export const api = {
   saveDraft: (body) => req('/tasks', { method: 'POST', body }),
   dispatch: (id) => req(`/tasks/${id}/dispatch`, { method: 'POST', body: {} }),
   click: (id, agentId) => req(`/tasks/${id}/click`, { method: 'POST', body: { agentId } }),
+  rateTask: (id, rating) => req(`/tasks/${id}/rate`, { method: 'POST', body: { rating } }),
   engine: () => req('/engine/overview'),
   airdropPending: () => req('/airdrop/pending'),
   airdropSent: (txHash, addresses) =>

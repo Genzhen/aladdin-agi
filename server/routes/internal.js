@@ -18,11 +18,11 @@ router.use((req, res, next) => {
   next();
 });
 
-router.post("/run-match", (req, res) => {
+router.post("/run-match", async (req, res) => {
   const { taskId } = req.body || {};
   if (!taskId) return res.status(400).json({ error: "taskId 必填" });
   try {
-    res.json({ ok: true, report: dispatch(getDb(), Number(taskId)) });
+    res.json({ ok: true, report: await dispatch(getDb(), Number(taskId)) });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message }); // 5xx → Go 引擎会重试
   }
