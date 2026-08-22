@@ -31,7 +31,11 @@ cd app && npm run build                      # 前端重新构建
 cd ../engine-go && GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o engine-go-linux .
 
 # 推上去（注意：artifacts/ 别排除！server 运行时要读 ABI——坑#10）
+# server/data 别同步：线上库有自己的链下状态（星级/评分/曝光），本地覆盖=丢数据；
+#   以前没炸只是 rsync 按 mtime 跳过（本地恰好更旧）——运气不是机制
+# .env 不同步：两边各自维护（内容目前一致，但别让本地覆盖成为隐式依赖）
 rsync -az --exclude '.git' --exclude 'node_modules' --exclude 'cache' \
+  --exclude 'server/data' --exclude '.env' \
   -e "ssh -i ~/.ssh/gzuni-key.pem" \
   ~/Desktop/Advance/doc/web3/task/aladdin-agi/ ec2-user@44.195.92.47:aladdin-agi/
 
