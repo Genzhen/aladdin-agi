@@ -7,7 +7,7 @@
 //  ⚠️ 本报告的数字全是展示层浮点。项目红线"金额一律整数"管的是资金
 //  （wei BigInt）；这里是内容生成，不碰钱，允许浮点——但要说明白。
 // ═══════════════════════════════════════════════════════════════════
-const { listen } = require("./lib");
+const { listen, llm } = require("./lib");
 
 const PORT = 9002;
 
@@ -46,8 +46,8 @@ function barChart(items) {
 
 const fmt = (n) => Number(n.toFixed(2)).toLocaleString("en-US");
 
-/** 大脑：任务描述 → 一份真算了的数据报告（markdown） */
-function brain({ taskId, title, description }) {
+/** 事实层（确定性）：任务描述 → 检出的数值与统计。LLM 只许解读，不许编数 */
+function computeStats(description) {
   const nums = extractNumbers(description);
   const pcts = nums.filter((n) => n.isPct);
   const plain = nums.filter((n) => !n.isPct);
@@ -61,6 +61,12 @@ function brain({ taskId, title, description }) {
         min: Math.min(...values),
       }
     : null;
+  return { nums, pcts, plain, stat };
+}
+
+/** 本地渲染（降级路径）：事实层 → ASCII 图表报告，0 成本、离线可跑 */
+function renderLocal({ title, description }, facts) {
+  const { nums, pcts, plain, stat } = facts;
 
   const lines = [
     `# 数据速报：${title || "（未命名任务）"}`,
@@ -93,6 +99,36 @@ function brain({ taskId, title, description }) {
     output: lines.join("\n"),
     meta: { numbersFound: nums.length, percents: pcts.length, stat },
   };
+}
+
+/**
+ * 大脑（V2 真 LLM）：事实层本地算死（数字不经过 LLM，防幻觉），
+ * DeepSeek 只负责把统计结果写成有人味的解读报告；失败降级 renderLocal。
+ */
+async function brain(payload) {
+  const { taskId, title, description } = payload;
+  const facts = computeStats(description);
+  try {
+    const { output, usage } = await llm({
+      system:
+        "你是 DataMiner X，数据分析师。下面给你一份【本地程序已经算好的事实清单】，" +
+        "基于且仅基于这些数字写 markdown 解读报告：结论先行、每处解读注明对应数字、一条风险提示。" +
+        "严禁编造清单之外的数字；清单没数字就明说无法分析。",
+      user:
+        `任务标题：${title || "（未命名任务）"}\n事实清单（JSON）：\n${JSON.stringify(
+          { 检出数值: facts.nums.length, 明细: facts.plain.slice(0, 12), 百分比: facts.pcts, 统计: facts.stat },
+          null, 1
+        )}\n\n原文材料：\n${description}`,
+    });
+    return {
+      output: `${output}\n\n---\n*报告：DataMiner X · 引擎 DeepSeek（本地统计 ${facts.nums.length} 项事实 + LLM 解读）*`,
+      meta: { engine: "deepseek-chat", numbersFound: facts.nums.length, usage, taskId },
+    };
+  } catch (e) {
+    console.error(`⚠️ [data-agent] LLM 失败，降级本地引擎：${e.message}`);
+    const r = renderLocal(payload, facts);
+    return { ...r, meta: { ...r.meta, engine: "local-ascii", fallback: e.message, taskId } };
+  }
 }
 
 listen(PORT, "data-agent", brain);

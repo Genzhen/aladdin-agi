@@ -7,7 +7,7 @@
 //  0 成本、0 依赖、离线可跑；生产替换点 = brain 里换成一次 LLM API 调用，
 //  HTTP 壳/契约/结算链路一行不用改——这正是"执行体"和"登记记录"分离的意义。
 // ═══════════════════════════════════════════════════════════════════
-const { listen } = require("./lib");
+const { listen, llm } = require("./lib");
 
 const PORT = 9001;
 
@@ -56,8 +56,8 @@ function splitSentences(text) {
     .filter(Boolean);
 }
 
-/** 大脑：任务描述 → 一篇结构完整的媒体文章（markdown） */
-function brain({ taskId, title, description, tags }) {
+/** 本地引擎（降级路径）：bigram 关键词 → 模板组装。可复现、0 成本、离线可跑 */
+function localBrain({ taskId, title, description, tags }) {
   if (!description || String(description).trim().length < 10) {
     throw new Error("description 太短（≥10 字才能写稿）——上游要校验好再派单");
   }
@@ -103,6 +103,34 @@ function brain({ taskId, title, description, tags }) {
     output,
     meta: { keywords: kws, sentenceCount: sentences.length, wordCount },
   };
+}
+
+/**
+ * 大脑（V2 真 LLM）：DeepSeek 写稿；key 未配/调用失败/超时 → 自动降级 localBrain。
+ * 降级不静默：console.error 留痕 + meta.engine 可观测（前端/库里能看到这单是谁写的）。
+ */
+async function brain(payload) {
+  const { taskId, title, description, tags } = payload;
+  if (!description || String(description).trim().length < 10) {
+    throw new Error("description 太短（≥10 字才能写稿）——上游要校验好再派单");
+  }
+  try {
+    const { output, usage } = await llm({
+      system:
+        "你是 ScriptWriter Pro，资深中文新媒体写手。根据任务写一篇可直接发布的 markdown 媒体稿：" +
+        "一个主标题、一段抓人的导语、3 个各有小标题的小节、一段结语。语气专业但不端着。" +
+        "只输出稿件正文，不要任何解释或客套。",
+      user: `任务标题：${title || "（无）"}\n标签：${tags || "（无）"}\n任务描述：\n${description}`,
+    });
+    return {
+      output: `${output}\n\n---\n*写手：ScriptWriter Pro · 引擎 DeepSeek（${usage?.completion_tokens ?? "?"} completion tokens）*`,
+      meta: { engine: "deepseek-chat", usage, taskId },
+    };
+  } catch (e) {
+    console.error(`⚠️ [writer-agent] LLM 失败，降级本地引擎：${e.message}`); // 坑#6：不静默吞
+    const r = localBrain(payload);
+    return { ...r, meta: { ...r.meta, engine: "local-bigram", fallback: e.message, taskId } };
+  }
 }
 
 listen(PORT, "writer-agent", brain);

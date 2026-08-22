@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════════
-//  start-all.js —— 一键拉起三个 Agent 执行体（写手/数据/审查）
+//  start-all.js —— 一键拉起五个 Agent 执行体（写手/数据/审查/合同/分镜）
 //  用法：node agents/start-all.js   （Ctrl+C 一起退，不留孤儿进程）
 // ═══════════════════════════════════════════════════════════════════
 const { spawn } = require("child_process");
 const path = require("path");
 
-const AGENTS = ["writer-agent.js", "data-agent.js", "review-agent.js"];
+const AGENTS = ["writer-agent.js", "data-agent.js", "review-agent.js", "contract-agent.js", "storyboard-agent.js"];
 const kids = [];
 
 for (const f of AGENTS) {
@@ -18,4 +18,4 @@ for (const f of AGENTS) {
 for (const sig of ["SIGINT", "SIGTERM"]) {
   process.on(sig, () => { for (const k of kids) k.kill(sig); process.exit(0); });
 }
-console.log(`🚀 已拉起 ${AGENTS.length} 个 Agent 执行体（9001/9002/9003），Ctrl+C 全部退出`);
+console.log(`🚀 已拉起 ${AGENTS.length} 个 Agent 执行体（9001~9005），Ctrl+C 全部退出`);

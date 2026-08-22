@@ -14,11 +14,16 @@
 // ═══════════════════════════════════════════════════════════════════
 const { getDb } = require("../server/db");
 
-// 链上 Agent id → 执行体地址（对应 agents/ 目录三个服务）
+// 链上 Agent id → 执行体地址（对应 agents/ 目录五个服务）
+// ⚠️ 15/16 是按链上 nextId 预填的（写此表时链上共 14 个）——
+//    上架顺序必须是 Contract Guard 先、Storyboard Mate 后；
+//    如果实际 id 对不上，改这里或直接 sqlite UPDATE agents SET endpoint=...
 const WIRING = {
   1: "http://127.0.0.1:9001", // ScriptWriter Pro → writer-agent（写稿）
   2: "http://127.0.0.1:9003", // CodeWeaver       → review-agent（代码审查）
   3: "http://127.0.0.1:9002", // DataMiner X      → data-agent（数据报告）
+  15: "http://127.0.0.1:9004", // Contract Guard   → contract-agent（合同审查·待上架）
+  16: "http://127.0.0.1:9005", // Storyboard Mate  → storyboard-agent（分镜脚本·待上架）
 };
 
 async function main() {

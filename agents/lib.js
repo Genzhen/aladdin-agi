@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-//  lib.js —— 三个 Agent 服务共用的"躯干"（HTTP 壳），不含任何智能
+//  lib.js —— 三个 Agent 服务共用的"躯干"（HTTP 壳 + LLM 通道），不含业务智能
 //
 //  为什么零依赖 node:http：Agent 的本质是"收到任务 → 干活 → 交回结果"，
 //  一个 HTTP 服务足够说明问题。Express 在这里是多余的一层。
@@ -9,11 +9,31 @@
 //  三个服务统一契约（agents/index.md 有完整说明）：
 //    GET  /health → {ok:true, agent, uptimeSec}     （wire-agents.js 探活用）
 //    POST /run    → {ok, agent, type:"markdown", output, meta}
-//    其余 404。请求体上限 64KB，超时 15s 由调用方（agent-runner）控制。
+//    其余 404。请求体上限 64KB；超时 60s 由调用方（agent-runner）控制。
+//
+//  brain 既可以是同步纯函数（可复现、可测试），也可以是 async
+//  （LLM 调用）——躯干不关心，统一 await。LLM 通道见下方 llm()。
 // ═══════════════════════════════════════════════════════════════════
 const http = require("http");
+const fs = require("fs");
+const path = require("path");
 
 const BODY_LIMIT = 64 * 1024;
+
+// ── mini dotenv：读 cwd/.env（零依赖）。真实环境变量优先，不覆盖 ──
+// PM2/裸 node 启动都能拿到 DEEPSEEK_API_KEY；key 永不硬编码进代码。
+(function loadEnv() {
+  try {
+    const p = path.join(process.cwd(), ".env");
+    if (!fs.existsSync(p)) return;
+    for (const line of fs.readFileSync(p, "utf8").split("\n")) {
+      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+      if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+    }
+  } catch (e) {
+    console.error("⚠️ [lib] .env 读取失败（LLM 将走降级路径）:", e.message); // 坑#6：不静默吞
+  }
+})();
 
 /** 读 JSON body（带 64KB 上限——agent 是内部服务，但坏输入照样要挡） */
 function readJson(req) {
@@ -39,9 +59,38 @@ function sendJson(res, code, obj) {
   res.end(body);
 }
 
+// ── LLM 通道：DeepSeek（OpenAI 兼容 /chat/completions），原生 fetch 零依赖 ──
+// 失败（key 未配/网络/超时/空返回）一律 throw，由各 agent 的 brain 决定降级。
+// 生产替换点：换 provider 只改 BASE_URL/MODEL 环境变量；流式加 stream:true。
+const LLM_BASE = process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com";
+const LLM_MODEL = process.env.DEEPSEEK_MODEL || "deepseek-chat";
+
+async function llm({ system, user, maxTokens = 1500, temperature = 0.7, timeoutMs = 50_000 }) {
+  const key = process.env.DEEPSEEK_API_KEY;
+  if (!key) throw new Error("DEEPSEEK_API_KEY 未配置");
+  const res = await fetch(`${LLM_BASE}/chat/completions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+    body: JSON.stringify({
+      model: LLM_MODEL,
+      messages: [{ role: "system", content: system }, { role: "user", content: user }],
+      max_tokens: maxTokens,
+      temperature,
+      stream: false,
+    }),
+    signal: AbortSignal.timeout(timeoutMs), // 50s < agent-runner 的 60s，留 10s 给落库+上链
+  });
+  if (!res.ok) throw new Error(`DeepSeek HTTP ${res.status}: ${(await res.text()).slice(0, 120)}`);
+  const j = await res.json();
+  const output = j.choices?.[0]?.message?.content?.trim();
+  if (!output) throw new Error("DeepSeek 返回空内容");
+  return { output, usage: j.usage || null };
+}
+
 /**
  * 起一个 Agent 服务：把"HTTP 壳"和"大脑"分离——
- * brain(payload) 是各 agent 唯一要写的函数，返回 {output, meta}。
+ * brain(payload) 是各 agent 唯一要写的函数，返回 {output, meta}；
+ * 同步纯函数或 async（LLM）都行，这里统一 await。
  */
 function listen(port, agentName, brain) {
   const startedAt = Date.now();
@@ -58,7 +107,7 @@ function listen(port, agentName, brain) {
       }
       if (req.method === "POST" && req.url === "/run") {
         const payload = await readJson(req);
-        const { output, meta } = brain(payload); // 大脑干活（同步纯函数：可复现、可测试）
+        const { output, meta } = await brain(payload); // 大脑干活（同步/LLM 通吃）
         return sendJson(res, 200, { ok: true, agent: agentName, type: "markdown", output, meta });
       }
       return sendJson(res, 404, { ok: false, error: "not found" });
@@ -72,4 +121,4 @@ function listen(port, agentName, brain) {
   return server;
 }
 
-module.exports = { listen };
+module.exports = { listen, llm };

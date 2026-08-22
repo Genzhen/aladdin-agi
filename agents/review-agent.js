@@ -8,7 +8,7 @@
 //  输入约定：代码贴在任务 description 里（或 code 字段）。
 //  生产替换点：换成 ESLint/semgrep 规则引擎或 LLM review，契约不变。
 // ═══════════════════════════════════════════════════════════════════
-const { listen } = require("./lib");
+const { listen, llm } = require("./lib");
 
 const PORT = 9003;
 
@@ -54,16 +54,18 @@ function scan(code) {
   return findings;
 }
 
-/** 大脑：代码 → 审查报告（markdown）。审查分 = 100 - Σ权重，下限 0 */
-function brain({ taskId, title, description, code }) {
-  const src = String(code || description || "");
-  if (src.trim().length < 5) {
-    throw new Error("没收到代码：请把代码贴进任务描述（或 code 字段）");
-  }
+/** 事实层（确定性）：源码 → 静态扫描发现 + 审查分。数字是算出来的，LLM 不许改 */
+function scanFacts(src) {
   const findings = scan(src);
   const bySev = (sev) => findings.filter((f) => f.sev === sev).length;
   const score = Math.max(0, 100 - findings.reduce((a, f) => a + SEV_WEIGHT[f.sev], 0));
   const lineCount = src.split("\n").length;
+  return { findings, score, lineCount, bySev: { high: bySev("high"), medium: bySev("medium"), low: bySev("low"), info: bySev("info") } };
+}
+
+/** 本地渲染（降级路径）：事实层 → 规则审查报告，0 成本、离线可跑 */
+function renderLocal({ title }, facts) {
+  const { findings, score, lineCount, bySev } = facts;
 
   const verdict = score >= 90 ? "整体健康，小毛病见明细" : score >= 70 ? "有几处真问题，修完再合" : "高危：先处理 🔴 再谈别的";
 
@@ -72,7 +74,7 @@ function brain({ taskId, title, description, code }) {
     ``,
     `**审查分 ${score}/100 —— ${verdict}**`,
     ``,
-    `共 ${lineCount} 行 · ${findings.length} 处发现（🔴 ${bySev("high")} · 🟠 ${bySev("medium")} · 🟡 ${bySev("low")} · 🔵 ${bySev("info")}）`,
+    `共 ${lineCount} 行 · ${findings.length} 处发现（🔴 ${bySev.high} · 🟠 ${bySev.medium} · 🟡 ${bySev.low} · 🔵 ${bySev.info}）`,
     ``,
     findings.length ? `| 行 | 级别 | 问题 | 片段 | 建议 |` : `**未命中任何规则——但这只说明没踩已知的坑，不等于逻辑正确。**`,
     ...(findings.length ? [`|---:|---|---|---|---|`] : []),
@@ -82,7 +84,40 @@ function brain({ taskId, title, description, code }) {
     `*审查：CodeWeaver（执行体 review-agent :${PORT}）· 规则 ${RULES.length + 1} 条（含超长行）· 静态扫描，不执行代码*`,
   ].join("\n");
 
-  return { output: out, meta: { score, lineCount, findings: findings.length, bySev: { high: bySev("high"), medium: bySev("medium"), low: bySev("low"), info: bySev("info") } } };
+  return { output: out, meta: { score, lineCount, findings: findings.length, bySev } };
+}
+
+/**
+ * 大脑（V2 真 LLM）：静态扫描结果是确定事实（行号/规则命中），
+ * DeepSeek 负责它真正擅长的——逻辑缺陷、安全隐患、设计问题（正则永远看不见的）；
+ * 失败降级 renderLocal（纯规则报告）。
+ */
+async function brain(payload) {
+  const { taskId, title, description, code } = payload;
+  const src = String(code || description || "");
+  if (src.trim().length < 5) {
+    throw new Error("没收到代码：请把代码贴进任务描述（或 code 字段）");
+  }
+  const facts = scanFacts(src);
+  try {
+    const { output, usage } = await llm({
+      system:
+        "你是 CodeWeaver，资深代码审查工程师。下面给你【本地静态扫描的确定发现】和【完整源码】。" +
+        "写 markdown 审查报告：总评（含建议评分/100）、按严重度排列的问题清单（行号、代码片段、修复建议）、" +
+        "一条静态扫描覆盖不到的盲区提醒。静态扫描结果是事实，不要推翻；你的增量价值是逻辑/安全/设计层的问题。",
+      user:
+        `任务标题：${title || "（未命名）"}\n静态扫描（JSON，审查分 ${facts.score}/100）：\n${JSON.stringify(facts.findings.slice(0, 30))}\n\n源码：\n${src.slice(0, 6000)}`,
+      maxTokens: 2000,
+    });
+    return {
+      output: `${output}\n\n---\n*审查：CodeWeaver · 引擎 DeepSeek（静态 ${facts.findings.length} 处确定发现 + LLM 逻辑审查，静态分 ${facts.score}/100）*`,
+      meta: { engine: "deepseek-chat", score: facts.score, findings: facts.findings.length, usage, taskId },
+    };
+  } catch (e) {
+    console.error(`⚠️ [review-agent] LLM 失败，降级本地引擎：${e.message}`);
+    const r = renderLocal(payload, facts);
+    return { ...r, meta: { ...r.meta, engine: "local-rules", fallback: e.message, taskId } };
+  }
 }
 
 listen(PORT, "review-agent", brain);

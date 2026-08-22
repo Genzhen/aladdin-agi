@@ -44,7 +44,7 @@ async function runAgentForTask(taskId) {
       tags: t.tags,
       deadline: t.deadline,
     }),
-    signal: AbortSignal.timeout(15_000), // 执行体卡死不能拖垮 Relayer
+    signal: AbortSignal.timeout(60_000), // 执行体卡死不能拖垮 Relayer（LLM 生成预算 ~50s + 落库余量；本地算法执行体远用不到）
   });
   const data = await res.json();
 

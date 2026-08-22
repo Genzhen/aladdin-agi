@@ -83,10 +83,26 @@ router.get("/:id", (req, res) => {
   ).all(req.params.id);
 
   // 交付物：Agent 执行体的真实产出（running 中可能还没好；无执行体则恒为 null）
+  // 预览门控（防白嫖）：任务未结算（state != settled）只放样章前 200 字；
+  // 验收打款或仲裁裁决后（殊途同归到 settled）解锁全文。失败原因（ok=0）不锁——
+  // 雇主不该付费才能看到"为什么失败"。
+  // 生产替换点：仲裁员端点带 admin 鉴权可取全文；更强 = 交付时 output 哈希上链防篡改。
+  const PREVIEW_CHARS = 200;
   const d = db.prepare("SELECT * FROM task_results WHERE task_id = ?").get(req.params.id);
-  const deliverable = d
-    ? { ok: !!d.ok, agentId: d.agent_id, output: d.output, error: d.error, createdAt: d.created_at }
-    : null;
+  let deliverable = null;
+  if (d) {
+    const full = String(d.output || "");
+    const locked = row.state !== "settled" && d.ok === 1 && full.length > PREVIEW_CHARS;
+    deliverable = {
+      ok: !!d.ok,
+      agentId: d.agent_id,
+      error: d.error,
+      createdAt: d.created_at,
+      output: locked ? full.slice(0, PREVIEW_CHARS) : full,
+      truncated: locked,
+      previewChars: PREVIEW_CHARS,
+    };
+  }
 
   res.json({ ...toApi(row), events, deliverable });
 });

@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 import { useState } from 'react'
 import { api } from '../lib/api'
-import { toEthNum, arbFeeOf, depositOf } from '../lib/contracts'
+import { toEthNum, depositOf } from '../lib/contracts'
 import { shortAddr, stateBadge, timeAgo, fmtPct } from '../lib/format'
 import { Card, Tag, Badge, Empty, Btn } from '../components/ui'
 import { useTx } from '../components/Wallet'
@@ -150,9 +150,16 @@ export default function TaskDetail() {
             <span className="text-[11px] text-slate-500">{timeAgo(t.deliverable.createdAt)}</span>
           </div>
           {t.deliverable.ok ? (
-            <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg border border-line bg-night/50 p-3 font-mono text-xs leading-relaxed text-slate-300">
-              {t.deliverable.output}
-            </pre>
+            <div className="space-y-2">
+              <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg border border-line bg-night/50 p-3 font-mono text-xs leading-relaxed text-slate-300">
+                {t.deliverable.output}
+              </pre>
+              {t.deliverable.truncated && (
+                <div className="rounded-lg border border-amber/30 bg-amber/10 p-3 text-xs text-amber">
+                  🔒 样章预览（前 {t.deliverable.previewChars} 字）——验收打款或仲裁裁决后解锁全文
+                </div>
+              )}
+            </div>
           ) : (
             <div className="rounded-lg border border-rose/30 bg-rose/10 p-3 text-xs text-rose">
               ❌ 执行体失败：{t.deliverable.error}（任务仍在进行中，工程师可手动交付补救）

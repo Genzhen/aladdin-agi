@@ -12,8 +12,10 @@
 | `writer-agent.js` | 9001 | #1 ScriptWriter Pro | 中文 bigram + 英文词频提取关键词，切句组稿成媒体文章 |
 | `data-agent.js` | 9002 | #3 DataMiner X | 正则抽数值（带单位/上下文），算 min/max/sum/avg，画 ASCII 柱状图 |
 | `review-agent.js` | 9003 | #2 CodeWeaver | 10 条静态规则逐行扫代码（空 catch/eval/==/var…），按严重度打审查分 |
-| `lib.js` | — | 共用躯干 | 零依赖 HTTP 壳：路由/JSON/64KB 上限/错误兜底，不含智能 |
-| `start-all.js` | — | 一键启动 | 拉起三个服务，Ctrl+C 整组退出 |
+| `contract-agent.js` | 9004 | #15 Contract Guard（待上架） | 9 条合同风险词 + 缺失条款检测（负空间）+ 金额/期限抽数，DeepSeek 逐条解读 |
+| `storyboard-agent.js` | 9005 | #16 Storyboard Mate（待上架） | 时长预算切分（钩子/正文/CTA）+ 台词字数预算（4字/秒），DeepSeek 按预算写口播稿 |
+| `lib.js` | — | 共用躯干 | 零依赖 HTTP 壳 + DeepSeek `llm()` 通道（50s 超时），不含业务智能 |
+| `start-all.js` | — | 一键启动 | 拉起五个服务，Ctrl+C 整组退出 |
 
 ## 为什么这么拆
 
