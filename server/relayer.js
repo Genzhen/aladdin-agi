@@ -107,13 +107,15 @@ async function backfillCourtEvents(db) {
   let added = 0;
   for (const name of ["CaseOpened", "VoteCast", "CaseRuled"]) {
     for (const ev of await court.queryFilter(court.getEvent(name), from, head)) {
+      // 坑#7 姊妹篇：监听回调里 blockNumber 在 ev.log 下，queryFilter 的 EventLog 却是
+      // 扁平的（ev.blockNumber 直取、无 timestamp 字段）——两种形状都兼容
+      const block = ev.blockNumber ?? ev.log?.blockNumber;
       const taskId = Number(ev.args.taskId);
-      const block = ev.log.blockNumber;
       if (seen.has(`${taskId}|${name}|${block}`)) continue;
       const args = JSON.stringify(argOf(name, ev.args), (k, v) => (typeof v === "bigint" ? String(v) : v));
-      const ts = ev.log.timestamp ? new Date(ev.log.timestamp * 1000).toISOString() : now();
+      const blk = await provider.getBlock(block); // EventLog 不带 timestamp，按块高取真时间
       db.prepare("INSERT INTO task_events (task_id, name, block, args, created_at) VALUES (?,?,?,?,?)")
-        .run(taskId, name, block, args, ts);
+        .run(taskId, name, block, args, blk ? new Date(blk.timestamp * 1000).toISOString() : now());
       seen.add(`${taskId}|${name}|${block}`);
       added += 1;
     }

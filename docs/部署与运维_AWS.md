@@ -42,8 +42,9 @@ cd ../engine-go && GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o engine-go-l
 # server/data 别同步：线上库有自己的链下状态（星级/评分/曝光），本地覆盖=丢数据；
 #   以前没炸只是 rsync 按 mtime 跳过（本地恰好更旧）——运气不是机制
 # .env 不同步：两边各自维护（内容目前一致，但别让本地覆盖成为隐式依赖）
+# .jurors-demo.json 不同步：陪审员演示私钥只在本地（服务器只读监听，用不到）
 rsync -az --exclude '.git' --exclude 'node_modules' --exclude 'cache' \
-  --exclude 'server/data' --exclude '.env' \
+  --exclude 'server/data' --exclude '.env' --exclude '.jurors-demo.json' \
   -e "ssh -i ~/.ssh/gzuni-key.pem -p 443" \
   ~/Desktop/Advance/doc/web3/task/aladdin-agi/ ec2-user@44.195.92.47:aladdin-agi/
 
