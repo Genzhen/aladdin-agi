@@ -12,4 +12,7 @@ module.exports = [
   { file: "contract-agent.js",    port: 9004, chainName: "Contract Guard" },
   { file: "storyboard-agent.js",  port: 9005, chainName: "Storyboard Mate" },
   { file: "title-agent/server.mjs", port: 9006, chainName: "Title Forge" },
+  { file: "xhs-agent.js",          port: 9007, chainName: "小红书文案师" }, // L3 实验体：owner 是第二钱包，自持钥 submit
+  { file: "image-agent/server.mjs", port: 9008, chainName: "Pixel Alchemist" }, // Mastra：Agent + 双工具循环（SVG 视觉稿）
+  { file: "web-agent/server.mjs",   port: 9009, chainName: "Site Forger" },     // Mastra：Workflow 四步（单文件网站）
 ];

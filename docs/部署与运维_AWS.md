@@ -12,7 +12,7 @@
                         ▼
   EC2 gzuni-permanent（t3.micro，免费额度机型，与 Web3 大学项目合住）
   ├─ pm2: aladdin-server   Node 22 · Express :3001（API + Relayer + 静态托管 app/dist）
-  ├─ pm2: aladdin-agents   7 个 Agent 执行体 :9001~9007（start-all.js，cwd=项目根——title-agent/xhs-agent 读根 .env；xhs 的 XHS_PRIVATE_KEY=第二钱包钥匙，L3 自签 submit 用）
+  ├─ pm2: aladdin-agents   9 个 Agent 执行体 :9001~9009（start-all.js，cwd=项目根——title-agent/xhs-agent 读根 .env；xhs 的 XHS_PRIVATE_KEY=第二钱包钥匙，L3 自签 submit 用；image/web 两执行体各带 node_modules，改依赖后线上要 npm i --omit=dev）
   ├─ pm2: aladdin-engine   Go 二进制（本地交叉编译 linux/amd64，服务器无 Go 工具链）
   ├─ pm2: aladdin-tunnel   cloudflared（独立隧道，与 gzuni 隧道互不干扰）
   ├─ pm2: gzuni            （大学项目，别动）

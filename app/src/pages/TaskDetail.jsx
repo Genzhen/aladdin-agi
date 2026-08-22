@@ -8,6 +8,7 @@ import { Card, Tag, Badge, Empty, Btn } from '../components/ui'
 import { AcceptPanel } from '../components/AcceptPanel'
 import { RatePanel } from '../components/RatePanel'
 import { DisputePanel } from '../components/DisputePanel'
+import { Deliverable } from '../components/Deliverable'
 import { useTx } from '../components/Wallet'
 
 // stepper：绿=已完成 蓝=进行中 灰=未到（disputed/cancelled 单独显示）
@@ -143,31 +144,8 @@ export default function TaskDetail() {
         </Card>
       </div>
 
-      {/* 交付物：Agent 执行体的真实产出（agent-runner 落库；null=还没好或纯挂牌） */}
-      {t.deliverable && (
-        <Card className="space-y-2">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold">📦 交付物 · Agent #{t.deliverable.agentId} 的真实产出</h2>
-            <span className="text-[11px] text-slate-500">{timeAgo(t.deliverable.createdAt)}</span>
-          </div>
-          {t.deliverable.ok ? (
-            <div className="space-y-2">
-              <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg border border-line bg-night/50 p-3 font-mono text-xs leading-relaxed text-slate-300">
-                {t.deliverable.output}
-              </pre>
-              {t.deliverable.truncated && (
-                <div className="rounded-lg border border-amber/30 bg-amber/10 p-3 text-xs text-amber">
-                  🔒 样章预览（前 {t.deliverable.previewChars} 字）——验收打款或仲裁裁决后解锁全文
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="rounded-lg border border-rose/30 bg-rose/10 p-3 text-xs text-rose">
-              ❌ 执行体失败：{t.deliverable.error}（任务仍在进行中，工程师可手动交付补救）
-            </div>
-          )}
-        </Card>
-      )}
+      {/* 交付物：Agent 执行体的真实产出（SVG 成图 / 网站 iframe 预览 / 源码样章） */}
+      <Deliverable dv={t.deliverable} />
 
       {/* 角色操作面板（演示自演自接：一个钱包顶两个角色） */}
       <Card className="space-y-3">
@@ -176,6 +154,11 @@ export default function TaskDetail() {
           {act('交付 (submit)', () => send('escrow', 'submit', { args: [BigInt(t.id)] }, '交付 (submit)'))}
           {act('⚠️ 开仲裁（0.5% 仲裁费裁决时从托管扣）', () =>
             send('escrow', 'openDispute', { args: [BigInt(t.id)] }, '⚠️ 开仲裁（0.5% 仲裁费裁决时从托管扣）'))}
+          {/* 超时罚没/退款：合约 claimTimeout 曾只能跑脚本（matching=全退雇主，
+              running=退+罚没保证金）。过了 deadline 才亮，防误点。 */}
+          {['matching', 'running'].includes(t.state) && t.deadline && t.deadline * 1000 < Date.now() &&
+            act('⏰ 超时退款/罚没 (claimTimeout)', () =>
+              send('escrow', 'claimTimeout', { args: [BigInt(t.id)] }, '⏰ 超时退款/罚没'))}
         </div>
         {lastError && <div className="text-xs text-rose">❌ {lastError}</div>}
         <AcceptPanel task={t} onDone={refresh} />

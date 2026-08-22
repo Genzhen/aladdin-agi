@@ -1,0 +1,16 @@
+{
+  "name": "image-agent",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Pixel Alchemist —— Mastra Agent 实现的 SVG 视觉工厂（平台执行体，端口 9008）",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^1.3.22",
+    "@mastra/core": "^0.10.0",
+    "ai": "^4.3.16",
+    "zod": "^3.24.0"
+  }
+}
