@@ -46,4 +46,21 @@ const token = new ethers.Contract(
   provider
 );
 
-module.exports = { provider, registry, escrow, token, deployed };
+// 第 11 步：陪审法庭 + YD 资格币。deployed.json 里有才挂——
+// 老环境（还没跑 deploy-jury.js）不至于启动就崩，缺的只是法庭事件
+let court = null;
+let yd = null;
+if (deployed.contracts.JuryCourt) {
+  court = new ethers.Contract(
+    deployed.contracts.JuryCourt,
+    loadAbi("JuryCourt.sol/JuryCourt.json"),
+    provider
+  );
+  yd = new ethers.Contract(
+    deployed.contracts.YidengToken,
+    loadAbi("YidengToken.sol/YidengToken.json"),
+    provider
+  );
+}
+
+module.exports = { provider, registry, escrow, token, court, yd, deployed };

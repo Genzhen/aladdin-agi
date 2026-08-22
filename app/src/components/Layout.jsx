@@ -7,7 +7,7 @@ const NAV = [
   { to: '/post', label: '发布任务' },
   { to: '/tasks', label: '任务大厅' },
   { to: '/engine', label: '匹配引擎' },
-  { to: '/arbitration', label: '仲裁' },
+  { to: '/arbitration', label: '法庭' },
   { to: '/profile', label: '我的' },
 ]
 

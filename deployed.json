@@ -6,6 +6,9 @@
   "contracts": {
     "MyToken": "0xA1250f0B4d812E04610Ad33e13ff1741cA21Fee0",
     "AgentRegistry": "0xCac00e365368bCA444fA1d493eD17Df0F506e7b1",
-    "TaskEscrow": "0xa934CAA9D6D0e2ca68985A775A482091390Cf6aa"
-  }
+    "TaskEscrow": "0xa934CAA9D6D0e2ca68985A775A482091390Cf6aa",
+    "YidengToken": "0xB14CcEd2ee774c51ac98b7f72f1D62Be86506409",
+    "JuryCourt": "0x8fa498A43d7F6A87caa594735F305b1B8D8ba7f4"
+  },
+  "juryDeployedAt": "2026-08-22T09:08:37.445Z"
 }

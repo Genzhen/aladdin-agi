@@ -4,7 +4,7 @@
 //  监听 TaskEscrow / AgentRegistry 的全部状态迁移事件，实时落库。
 //  （生产版还要加"启动补账"：扫历史块回放事件——结业优化项）
 // ═══════════════════════════════════════════════════════════════════
-const { registry, escrow } = require("./chain");
+const { registry, escrow, court } = require("./chain");
 const { getDb } = require("./db");
 const { enqueue } = require("./queue");
 const { dispatch } = require("./matching");
@@ -13,6 +13,7 @@ const { handleAccepted } = require("./agent-runner");
 
 const now = () => new Date().toISOString();
 const lo = (addr) => (addr ? String(addr).toLowerCase() : null);
+const short = (addr) => (addr ? `${String(addr).slice(0, 6)}…${String(addr).slice(-4)}` : "?");
 
 // 空投记账（PRD §7：上架 +10 / 发单 +5 / 完单 +20 MYT；幂等靠 UNIQUE 约束）
 const MYT = (n) => String(BigInt(n) * 10n ** 18n); // ⚠️ BigInt 家族坑第 4 次：n 是 Number，必须显式 BigInt() 再乘
@@ -207,6 +208,39 @@ function startRelayer() {
     recordEvent(db, Number(id), "TaskCancelled", ev?.log?.blockNumber, { slashed: Boolean(depositSlashed) });
     log("TaskCancelled", `#${id} → cancelled`);
   });
+
+  // ── JuryCourt 陪审法庭事件（第 11 步）──
+  // 案件流水全部进 task_events 证据链：雇主在任务页/仲裁中心就能看到
+  // 抽签→投票→宣判全过程（不再只有平台能看）。结算本身零改动——
+  // 法庭调 escrow.executeRuling 时上面那个 TaskRuled 监听照常结算。
+  if (court) {
+    court.on("CaseOpened", (taskId, panel, voteEnds, ev) => {
+      recordEvent(db, Number(taskId), "CaseOpened", ev?.log?.blockNumber, {
+        panel,
+        voteEnds: String(voteEnds),
+      });
+      log("CaseOpened", `任务#${taskId} 合议庭已抽签（${panel.length} 人）`);
+    });
+
+    court.on("VoteCast", (taskId, juror, vote, ev) => {
+      recordEvent(db, Number(taskId), "VoteCast", ev?.log?.blockNumber, {
+        juror: lo(juror),
+        vote: Number(vote),
+      });
+      log("VoteCast", `任务#${taskId} 陪审员 ${short(juror)} 投了 ${["Agent胜", "雇主胜", "对半"][Number(vote)]}`);
+    });
+
+    court.on("CaseRuled", (taskId, ruling, winnerCount, slashedCount, ev) => {
+      recordEvent(db, Number(taskId), "CaseRuled", ev?.log?.blockNumber, {
+        ruling: Number(ruling),
+        winnerCount: Number(winnerCount),
+        slashedCount: Number(slashedCount),
+      });
+      log("CaseRuled", `任务#${taskId} 宣判 ${["Agent胜", "雇主胜", "对半"][Number(ruling)]}（多数方 ${winnerCount} 人 / 被罚 ${slashedCount} 人）`);
+    });
+
+    console.log("👂 [Relayer] 法庭事件已挂载（CaseOpened/VoteCast/CaseRuled → 证据链）");
+  }
 
   console.log("👂 [Relayer] 已挂载 9 个链上事件监听（AgentRegistry×2 + TaskEscrow×7）");
 

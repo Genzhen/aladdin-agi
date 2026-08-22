@@ -82,6 +82,8 @@ function getContractMeta(contract) {
     token: 'MyToken',
     registry: 'AgentRegistry',
     escrow: 'TaskEscrow',
+    court: 'JuryCourt',   // 第 11 步：陪审法庭
+    yd: 'YidengToken',    // 第 11 步：陪审资格币
   }
   const addressKey = aliases[contract] || contract
   const abiKey = contract.toLowerCase()
@@ -142,6 +144,14 @@ export function WalletChip() {
     args: address ? [address] : undefined,
     query: { enabled: !!address },
   })
+  // 第 11 步：YD 陪审资格币余额（MYT 干活赚、YD 质押当陪审员——两种币两种人生）
+  const { data: yd } = useReadContract({
+    address: ADDR.YidengToken,
+    abi: ABI.yd,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    query: { enabled: !!address },
+  })
 
   if (!isConnected) {
     const injected0 = connectors[0]
@@ -155,6 +165,9 @@ export function WalletChip() {
     <div className="flex items-center gap-2">
       <span className="rounded-lg border border-line bg-night-2 px-2.5 py-1 text-xs text-slate-300">
         {Number(myt || 0n) / 1e18 | 0} MYT
+      </span>
+      <span className="rounded-lg border border-amber/30 bg-night-2 px-2.5 py-1 text-xs text-amber" title="Yideng：质押当陪审员的资格币">
+        {Number(yd || 0n) / 1e18 | 0} YD
       </span>
       <Btn
         size="sm"

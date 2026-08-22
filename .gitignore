@@ -23,3 +23,6 @@ engine-go/engine-go
 
 # Cloudflare 隧道凭据（密钥，同 .env 级别）
 cloudflared-tunnel/
+
+# 陪审员演示钱包私钥（seed-jurors.js 产物，勿提交）
+.jurors-demo.json

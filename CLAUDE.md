@@ -10,8 +10,8 @@ AI Agent 分发平台（双边市场）：工程师上架 Agent（链上登记�
 
 | 目录 | 是什么 | 技术栈 |
 |---|---|---|
-| `contracts/` | 三合约：MyToken / AgentRegistry / TaskEscrow | Solidity + Hardhat 2.29 + OZ 5.6.1 |
-| `agents/` | 9 个 Agent 执行体（9001~9009：手写版 + 3 个 Mastra 版[title 单工具/image 双工具/web Workflow] + L3 自持钥 xhs-agent）；manifest.js 单一清单，心跳自报到自动接线 | 零依赖 node:http + Mastra |
+| `contracts/` | 五合约：MyToken / AgentRegistry / TaskEscrow / YidengToken(YD) / JuryCourt(陪审法庭) | Solidity + Hardhat 2.29 + OZ 5.6.1 |
+| `agents/` | 10 个 Agent 执行体（9001~9010：手写版 + 3 个 Mastra 版[title 单工具/image 双工具/web Workflow] + L3 自持钥 xhs-agent）；manifest.js 单一清单，心跳自报到自动接线 | 零依赖 node:http + Mastra |
 | `server/` | API + Relayer + 匹配引擎 + agent-runner（派活给执行体） | Express 4 + better-sqlite3 + ethers 6 |
 | `server/matching/` | 三层漏斗 V0/V1/V2（手写 TF-IDF、手写逻辑回归） | 纯 JS 零依赖 |
 | `engine-go/` | 队列消费者（重试+死信） | Go，零第三方依赖（手写 RESP） |
@@ -23,7 +23,7 @@ AI Agent 分发平台（双边市场）：工程师上架 Agent（链上登记�
 - 单文件 ≤ 300 行（React 组件 ≤ 200 行）；函数 ≤ 50 行
 - **每个目录必须配 index.md**（说清楚这个目录是什么、为什么这么拆）
 - 金额一律整数：链上 wei（BigInt），库里 TEXT，展示层才转浮点
-- 测试：合约 30 用例（`npx hardhat test`）、匹配 8 用例（`cd server && node --test`）、Go `go build ./... && go vet`
+- 测试：合约 45 用例（`npx hardhat test`：MyToken 9 + Registry 6 + Escrow 15 + JuryCourt 15）、匹配 8 用例（`cd server && node --test`）、Go `go build ./... && go vet`
 - 所有"生产替换点"写在代码注释里（SQLite→PG、手写 RESP→go-redis、TF-IDF→语义向量…）
 
 ## 常见坑速查（本项目真实踩过）
@@ -52,6 +52,11 @@ AI Agent 分发平台（双边市场）：工程师上架 Agent（链上登记�
     变量在节点端（订阅轮换/自动选择换了出口），本机与 AWS 都没问题。永久解=服务器 sshd
     加听 443 + 安全组放行 443，一律 `ssh -p 443` / `rsync -e "ssh -p 443 …"`——
     443 是任何代理节点必转的端口（本机 GitHub 走 443 通道是同一道理的先例）。
+14. **struct 的 public mapping 自动 getter 两连坑（JuryCourt 跨合约读 escrow.tasks 踩的）**：
+    ① 返回**匿名扁平元组**，不能 `Task memory t = escrow.tasks(id)`——只能按位置解构
+    `(publisher, agent,, price,,, s) = escrow.tasks(id);`；
+    ② **静默丢弃 struct 里的数组成员**（panel/votes/voted 链上直接读不到）——
+    struct 一复杂就别指望自动 getter，手写视图函数（JuryCourt.getCase 就是这么来的）。
 
 ## 一键起全套
 
@@ -65,3 +70,6 @@ node scripts/wire-agents.js                                 # 诊断工具（接
 ```
 
 链上操作钱包 = 部署者 `0x5633…8F50`（owner），私钥在根 `.env`（勿提交）。
+⚠️ 2026-08-22 起 **TaskEscrow 的 owner 已移交 JuryCourt**——平台旧三按钮裁决会 revert（预期），
+真裁决走法庭（`scripts/demo-jury.js` 可复现真案 #19 全流程）。陪审员演示私钥在根
+`.jurors-demo.json`（gitignore，勿提交），导入 MetaMask 可手动玩庭审。
