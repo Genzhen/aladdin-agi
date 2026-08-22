@@ -12,7 +12,8 @@ import { useTx } from './Wallet'
 export function AcceptPanel({ task, onDone }) {
   const { address } = useAccount()
   const { send, pending, lastError } = useTx()
-  const { data: agents } = useQuery({ queryKey: ['agents'], queryFn: api.agents })
+  // 必须箭头包裹：裸引用 api.agents 会被 React Query 传入 query 上下文对象 → /api/agents[object Object] 404
+  const { data: agents } = useQuery({ queryKey: ['agents'], queryFn: () => api.agents() })
 
   const mine = (agents || []).filter(
     (a) => a.owner?.toLowerCase() === address?.toLowerCase() && a.status !== 'delisted',

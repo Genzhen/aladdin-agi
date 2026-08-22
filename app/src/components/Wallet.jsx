@@ -64,6 +64,13 @@ export function useTx() {
       emitTx('done', label, { hash, ok: rc.status === 'success' })
       return { ok: rc.status === 'success', hash }
     } catch (e) {
+      // 发版自愈（补洞）：旧标签页动态 import 404 会被本 catch 截住，
+      // 冒泡不到 main.jsx 的 window 监听——就地识别并刷新拿新构建
+      if (/dynamically imported module/i.test(e?.message || '')) {
+        console.warn('检测到旧构建的模块 404，自动刷新到新版本…')
+        location.reload()
+        return { ok: false }
+      }
       setPending(null)
       console.error(`[tx:${label}]`, e)
       const msg = formatTxError(e)
