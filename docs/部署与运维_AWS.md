@@ -12,11 +12,19 @@
                         ▼
   EC2 gzuni-permanent（t3.micro，免费额度机型，与 Web3 大学项目合住）
   ├─ pm2: aladdin-server   Node 22 · Express :3001（API + Relayer + 静态托管 app/dist）
+  ├─ pm2: aladdin-agents   6 个 Agent 执行体 :9001~9006（start-all.js，cwd=项目根——title-agent 读根 .env）
   ├─ pm2: aladdin-engine   Go 二进制（本地交叉编译 linux/amd64，服务器无 Go 工具链）
   ├─ pm2: aladdin-tunnel   cloudflared（独立隧道，与 gzuni 隧道互不干扰）
   ├─ pm2: gzuni            （大学项目，别动）
-  └─ systemd: valkey       redis 的开源继任者，RESP 兼容，队列用
+  ├─ systemd: valkey       redis 的开源继任者，RESP 兼容，队列用
+  └─ swap 1G               /swapfile（fstab 持久化）——t3.micro 913M 内存跑两项目+Mastra 的兜底
 ```
+
+- **SSH 双端口 22+443**（`/etc/ssh/sshd_config.d/10-port443.conf`）：443 是任何代理节点
+  必转的端口——本地 Clash TUN 开着时 22 口常被代理出口拒（banner 超时），443 永远通。
+  安全组 gzuni-sg 放行 22 与 443（均仅密钥登录）。
+- 执行体接线已全自动（自报到 `/api/executors/announce` + 链上事件双向对账），
+  部署后**无需**跑 wire-agents；`GET /api/executors` 看心跳（公开路由，仅暴露 127.0.0.1 拓扑）。
 
 - 同源部署：前端 `fetch('/api/…')` 不跨域；SPA 深链由 server 兜底回 index.html
 - 链是真相源：线上库（SQLite）只是索引——**实例全挂也不丢数据**，服务起来即补账
@@ -36,15 +44,16 @@ cd ../engine-go && GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o engine-go-l
 # .env 不同步：两边各自维护（内容目前一致，但别让本地覆盖成为隐式依赖）
 rsync -az --exclude '.git' --exclude 'node_modules' --exclude 'cache' \
   --exclude 'server/data' --exclude '.env' \
-  -e "ssh -i ~/.ssh/gzuni-key.pem" \
+  -e "ssh -i ~/.ssh/gzuni-key.pem -p 443" \
   ~/Desktop/Advance/doc/web3/task/aladdin-agi/ ec2-user@44.195.92.47:aladdin-agi/
 
-# 服务器（SSH 上去）
-ssh -i ~/.ssh/gzuni-key.pem ec2-user@44.195.92.47
-pm2 restart aladdin-server aladdin-engine && pm2 logs aladdin-server --lines 20
+# 服务器（SSH 上去；-p 443 是代理免疫端口，TUN 开着也通）
+ssh -p 443 -i ~/.ssh/gzuni-key.pem ec2-user@44.195.92.47
+pm2 restart aladdin-server aladdin-agents aladdin-engine && pm2 logs aladdin-server --lines 20
 ```
 
-改了 server 依赖时，rsync 后先 `cd ~/aladdin-agi/server && npm install --omit=dev` 再 restart。
+改了 server 依赖时，rsync 后先 `cd ~/aladdin-agi/server && npm install --omit=dev` 再 restart；
+改了 title-agent 依赖时同理 `cd ~/aladdin-agi/agents/title-agent && npm install --omit=dev`。
 
 ## 三、坏了怎么查（排障顺序：由外向内）
 
@@ -57,6 +66,8 @@ ssh … 'curl -s localhost:3001/api/health'           # ④ 绕开隧道直测�
 ```
 
 - 域名不通但本机通 → 隧道挂了：`pm2 restart aladdin-tunnel`，再不行查 Cloudflare 后台
+- SSH 卡在 "banner exchange" 超时 → 本地 Clash TUN 劫持、当前代理节点拒转 22 口
+  （GitHub 的 22 口同样死是判据）。**解法：加 `-p 443`**（443 是节点必转端口，永久免疫）
 - server 重启循环 → 十有八九是缺文件/依赖（首上线就是 artifacts ENOENT，见下）
 - 实例重启后 IP 会变：**不影响域名**（隧道自动重连），只影响 SSH 用旧 IP
 
