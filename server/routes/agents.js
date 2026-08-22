@@ -2,6 +2,7 @@
 //  routes/agents.js —— Agent 相关端点（对应 S1 市场首页 / S2 详情页）
 // ═══════════════════════════════════════════════════════════════════
 const express = require("express");
+const { ethers } = require("ethers");
 const { getDb } = require("../db");
 const { computeDims } = require("../scoring");
 
@@ -61,11 +62,29 @@ router.get("/:id", (req, res) => {
 });
 
 // POST /api/agents/:id —— 补链下长文本（上架交易已在链上，这里只 enrich）
+// ⚠️ owner 签名鉴权：曾经裸奔（任何人可改任意 Agent 的简介/下架状态）。
+// 前端（Enrich/AutoAccept）用当前钱包签 `aladdin:enrich:${id}:${ts}`，这里
+// recoverAddress 对比 agent.owner。消息绑 agentId 防跨 Agent 盗用、绑时间戳防重放。
+// 生产替换点：EIP-712 typed data + 服务端一次性 nonce（当前 ±5min 时间窗是演示级）。
 router.post("/:id", (req, res) => {
   const db = getDb();
-  const { description, tags, status, autoAccept } = req.body;
-  const row = db.prepare("SELECT id FROM agents WHERE id = ?").get(req.params.id);
+  const { description, tags, status, autoAccept, sig, ts } = req.body;
+  const row = db.prepare("SELECT id, owner FROM agents WHERE id = ?").get(req.params.id);
   if (!row) return res.status(404).json({ error: "agent not found" });
+
+  const tsNum = Number(ts);
+  if (!sig || !Number.isFinite(tsNum) || Math.abs(Date.now() - tsNum) > 5 * 60_000) {
+    return res.status(401).json({ error: "缺少 owner 签名或时间戳超出 ±5 分钟窗口" });
+  }
+  let signer;
+  try {
+    signer = ethers.verifyMessage(`aladdin:enrich:${req.params.id}:${tsNum}`, sig);
+  } catch {
+    return res.status(401).json({ error: "签名格式不合法" });
+  }
+  if (signer.toLowerCase() !== row.owner) {
+    return res.status(403).json({ error: `签名者 ${signer} 不是这个 Agent 的 owner` });
+  }
 
   db.prepare(`
     UPDATE agents SET
@@ -77,7 +96,7 @@ router.post("/:id", (req, res) => {
     autoAccept === undefined ? null : (autoAccept ? 1 : 0), // 布尔 → 0/1（SQLite 无布尔）
     req.params.id,
   );
-  res.json({ ok: true });
+  res.json({ ok: true, signer });
 });
 
 module.exports = router;

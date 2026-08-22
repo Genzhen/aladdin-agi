@@ -1,13 +1,17 @@
 // Enrich —— Agent 简介编辑(owner 专属)。链下补全,不发交易:
 // register 只上链 4 字段元数据,长介绍走 POST /api/agents/:id 落库——
 // 它同时是 V1(TF-IDF) 的匹配语料,填得越具体召回越准。
+// 保存前用当前钱包签一条消息(aladdin:enrich:id:ts),后端 recoverAddress
+// 对比 owner——接口曾经裸奔,现在是"签名证明我是主人"。
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useSignMessage } from 'wagmi'
 import { api } from '../lib/api'
 import { Btn, inputCls } from './ui'
 
 export default function Enrich({ agentId, description }) {
   const qc = useQueryClient()
+  const { signMessageAsync } = useSignMessage()
   const [open, setOpen] = useState(false)
   const [text, setText] = useState(description || '')
   const [saving, setSaving] = useState(false)
@@ -17,7 +21,9 @@ export default function Enrich({ agentId, description }) {
   async function save() {
     setSaving(true); setErr('')
     try {
-      await api.enrichAgent(agentId, { description: text })
+      const ts = Date.now()
+      const sig = await signMessageAsync({ message: `aladdin:enrich:${agentId}:${ts}` })
+      await api.enrichAgent(agentId, { description: text, sig, ts })
       qc.invalidateQueries({ queryKey: ['agent', String(agentId)] })
       qc.invalidateQueries({ queryKey: ['agents'] })
       setOpen(false); setSaved(true)

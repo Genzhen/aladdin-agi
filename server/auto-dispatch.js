@@ -31,11 +31,20 @@ function lastMatchedAtMs(db, taskId) {
 
 /** 候选列表（按推荐名次）里第一个"愿意听单"的 Agent：active + 有执行体 + 开了自动接单 */
 function firstListener(db, candidates) {
+  const admin = (require("./admin").adminAddress || "").toLowerCase();
   for (const c of candidates || []) {
     const a = db.prepare(
-      "SELECT id, name, auto_accept, status, endpoint FROM agents WHERE id = ?"
+      "SELECT id, name, auto_accept, status, endpoint, owner FROM agents WHERE id = ?"
     ).get(c.agentId);
-    if (a && a.status !== "delisted" && a.endpoint && a.auto_accept) return a;
+    if (!a || a.status === "delisted" || !a.endpoint || !a.auto_accept) continue;
+    // 代签合法区：合约要求 accept 的 msg.sender == ownerOf(agentId)，平台只持有
+    // 部署钱包的钥匙——只能替"owner=部署钱包"的 Agent 抢单。第二钱包的 Agent
+    // 代签必 revert，白烧 gas 还刷日志；那些 Agent 由 owner 自己（前端/执行体）接单。
+    if (a.owner.toLowerCase() !== admin) {
+      log(`Agent#${a.id} ${a.name} 开了自动接单但 owner(${a.owner.slice(0, 8)}…)不是平台钱包，代签无权——跳过`);
+      continue;
+    }
+    return a;
   }
   return null;
 }

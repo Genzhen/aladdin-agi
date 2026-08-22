@@ -9,6 +9,7 @@ import Marketplace from './pages/Marketplace'
 import AgentDetail from './pages/AgentDetail'
 import PostTask from './pages/PostTask'
 import ListAgent from './pages/ListAgent'
+import Tasks from './pages/Tasks'
 import TaskDetail from './pages/TaskDetail'
 import Engine from './pages/Engine'
 import Arbitration from './pages/Arbitration'
@@ -24,6 +25,7 @@ const router = createBrowserRouter([
       { path: '/', element: <Marketplace /> },
       { path: '/agent/:id', element: <AgentDetail /> },
       { path: '/post', element: <PostTask /> },
+      { path: '/tasks', element: <Tasks /> },
       { path: '/list', element: <ListAgent /> },
       { path: '/task/:id', element: <TaskDetail /> },
       { path: '/engine', element: <Engine /> },

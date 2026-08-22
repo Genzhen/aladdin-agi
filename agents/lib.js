@@ -116,6 +116,34 @@ async function announceLoop(port, agentName) {
   }
 }
 
+// ── L3 自签 submit：执行体自持钥，不再让平台代签 ──
+// 合约法条：submit 要求 msg.sender == t.agent（接单者）。L1/L2 里所有
+// Agent owner 都是部署钱包，平台拿同一把钥匙"代签"合法；L3 起第二钱包
+// 拥有的 Agent（如 xhs-agent）接单后，只有那把钥匙能 submit——执行体
+// 自己持钥（env 注入），平台 relayer 退回纯路由。这正是"接单权归钱包"。
+// ethers 用根 node_modules（agents/ 无依赖红线不动），deployed.json/artifacts
+// 也都在项目根——路径锚定 __dirname 而非 cwd，从哪启动都行。
+// 生产替换点：钥匙进 KMS/TEE，或改成 per-task 授权（EIP-712 会话密钥）。
+const ROOT = path.join(__dirname, "..");
+
+async function submitSelf(taskId, keyEnv = "XHS_PRIVATE_KEY") {
+  const rawKey = (process.env[keyEnv] || "").replace(/[^0-9a-fA-F]/g, "");
+  if (!rawKey) throw new Error(`${keyEnv} 未配置——执行体没钥匙，无法自签 submit`);
+  const { ethers } = require(path.join(ROOT, "node_modules", "ethers")); // 惰性加载：别的 agent 不背这依赖
+  const deployed = JSON.parse(fs.readFileSync(path.join(ROOT, "deployed.json"), "utf8"));
+  const abi = JSON.parse(
+    fs.readFileSync(path.join(ROOT, "artifacts", "contracts", "TaskEscrow.sol", "TaskEscrow.json"), "utf8")
+  ).abi;
+  // RPC 兜底与 server/chain.js 同款：SEPOLIA_RPC_URL 留空时走公共节点
+  const rpc = process.env.SEPOLIA_RPC_URL || "https://ethereum-sepolia-rpc.publicnode.com";
+  const provider = new ethers.JsonRpcProvider(rpc);
+  const wallet = new ethers.Wallet("0x" + rawKey, provider);
+  const escrow = new ethers.Contract(deployed.contracts.TaskEscrow, abi, wallet);
+  const tx = await escrow.submit(taskId);
+  const rc = await tx.wait();
+  return rc.hash;
+}
+
 // ── LLM 通道：DeepSeek（OpenAI 兼容 /chat/completions），原生 fetch 零依赖 ──
 // 失败（key 未配/网络/超时/空返回）一律 throw，由各 agent 的 brain 决定降级。
 // 生产替换点：换 provider 只改 BASE_URL/MODEL 环境变量；流式加 stream:true。
@@ -181,4 +209,4 @@ function listen(port, agentName, brain) {
   return server;
 }
 
-module.exports = { listen, llm };
+module.exports = { listen, llm, submitSelf };

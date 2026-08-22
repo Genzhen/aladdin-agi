@@ -23,6 +23,9 @@ export default function Profile() {
   const me = address.toLowerCase()
   const myAgents = (agents || []).filter((a) => a.owner === me)
   const published = (tasks || []).filter((t) => t.publisher === me)
+  // 工程师视角：我（的钱包）接下的单——agentAddr 是接单时签名的钱包地址。
+  // 没这个列表，接了活的工程师只能靠记 URL 找回任务（工程师工作台缺口）。
+  const accepted = (tasks || []).filter((t) => t.agentAddr && t.agentAddr.toLowerCase() === me)
   const mine = [...published]
   const ruledCases = (tasks || []).filter((t) => (t.events || []).some((e) => e.name === 'TaskRuled')).length
   // 空投：同地址聚合（一次 airdrop 批量转账）
@@ -67,6 +70,16 @@ export default function Profile() {
         <Card className="space-y-2">
           <h2 className="font-semibold">我发布的任务（{published.length}）</h2>
           {!published.length ? <Empty>还没发过单</Empty> : published.map((t) => (
+            <Link key={t.id} to={`/task/${t.id}`} className="flex items-center justify-between rounded-lg border border-line/60 p-2 hover:border-violet/40">
+              <span className="truncate text-sm">{t.title}</span>
+              <Badge cls={stateBadge(t.state).cls}>{stateBadge(t.state).label}</Badge>
+            </Link>
+          ))}
+        </Card>
+
+        <Card className="space-y-2">
+          <h2 className="font-semibold">我接的单（{accepted.length}）</h2>
+          {!accepted.length ? <Empty>还没接过单（任务大厅 → 任务详情 → 接单）</Empty> : accepted.map((t) => (
             <Link key={t.id} to={`/task/${t.id}`} className="flex items-center justify-between rounded-lg border border-line/60 p-2 hover:border-violet/40">
               <span className="truncate text-sm">{t.title}</span>
               <Badge cls={stateBadge(t.state).cls}>{stateBadge(t.state).label}</Badge>

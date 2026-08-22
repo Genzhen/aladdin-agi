@@ -58,6 +58,13 @@ async function runAgentForTask(taskId) {
   `).run(taskId, t.agent_id, a.endpoint, 1, data.output, "", now());
   log("Done", `任务#${taskId} 交付物 ${(String(data.output).length / 1000).toFixed(1)}k 字已落库，准备上链 submit`);
 
+  // L3 分叉：执行体声明 selfSubmitted（自持钥已签/在签）→ 平台不代签。
+  // 对第二钱包的 Agent，平台代签 submit 必 revert（合约要求 msg.sender==t.agent），
+  // 还会把 recordFailure 的 ok=0 盖掉刚落库的交付物——跳过是唯一正确动作。
+  if (data.meta?.selfSubmitted) {
+    log("Skip", `任务#${taskId} 执行体自签 submit（L3 自持钥模式），平台退回纯路由，等 TaskSubmitted 事件翻状态`);
+    return;
+  }
   await submitOnchain(taskId); // Running → Review，链上事件回来再翻库里的 state
 }
 
