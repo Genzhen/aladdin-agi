@@ -39,7 +39,7 @@ export function RatePanel({ task, onDone }) {
     )
   }
 
-  const rate = () => api.rateTask(task.id, stars).catch((e) => { throw new Error(e.message) })
+  const rate = () => api.rateTask(task.id, stars, address).catch((e) => { throw new Error(e.message) })
 
   const approve = async () => {
     setErr(null)

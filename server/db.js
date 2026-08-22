@@ -127,6 +127,18 @@ function initSchema(db) {
   // agents.endpoint：执行体地址（链下"店面装修"，不上链）。空串=纯挂牌无执行体
   try { db.exec("ALTER TABLE agents ADD COLUMN endpoint TEXT DEFAULT ''"); } catch { }
 
+  // ── executor_registry：执行体心跳报到表（服务自注册，注册中心的雏形）──
+  // 执行体启动即 POST /api/executors/announce 登记"chain_name → endpoint"，
+  // 与链上 AgentRegistered 事件双向对账：谁后到都能自动接线——
+  // wire-agents.js 从此降级为诊断/修复工具，正常流程零人工。
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS executor_registry (
+      chain_name TEXT PRIMARY KEY,     -- manifest 里声明的链上门牌
+      endpoint   TEXT NOT NULL,
+      last_seen  TEXT                  -- 最近心跳（生产替换点：失联>90s 自动摘牌=熔断）
+    );
+  `);
+
   // agents.auto_accept：自动接单开关（链下 enrich 可改）。开着=平台在"匹配完成
   // 45s 无人手动接"时替它代签 accept——对应真实市场的"司机听单"模式
   try { db.exec("ALTER TABLE agents ADD COLUMN auto_accept INTEGER DEFAULT 0"); } catch { }

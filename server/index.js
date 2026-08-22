@@ -20,6 +20,7 @@ app.use(express.json());
 // ── 路由挂载 ──
 app.use("/api/agents", agentsRouter);
 app.use("/api/tasks", tasksRouter);
+app.use("/api/executors", require("./routes/executors")); // 执行体心跳报到 + 自动接线
 app.use("/api/tasks", require("./routes/match")); // :id/dispatch、:id/click（路径不与 tasks.js 冲突）
 app.use("/api/internal", require("./routes/internal")); // Go 引擎专用（token 鉴权）
 app.use("/api/engine", require("./routes/engine")); // S5 引擎总览

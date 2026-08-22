@@ -1,53 +1,72 @@
 // ═══════════════════════════════════════════════════════════════════
-//  wire-agents.js —— 给链上 Agent 接上执行体（endpoint 写进链下库）
+//  wire-agents.js —— 接线诊断/修复工具（正常流程已全自动，平时不用跑）
 //
-//  设计点（面试话术）：
-//  1. endpoint 是"店面装修"不是"执照字段"——所以只写 SQLite 不动链，
-//     一秒完成、零 gas。链上登记记录和执行体是两个可独立演进的东西。
-//  2. 写完逐个探活（GET /health）：agent 服务没起就当场告诉你，
-//     别等到任务接单了才发现没人干活。
-//  3. 为什么不做链上 endpoint 字段：地址会随部署变（本地/AWS/Serverless），
-//     上链一次就烧一次 gas 还改不了历史——链下库改一行的事。
+//  自动接线闭环（谁后到都能接上，两个方向）：
+//    ① 执行体启动即向平台心跳报到（agents/lib.js 的 announceLoop
+//       → POST /api/executors/announce）——报到时链上已有同名 active
+//       Agent 就当场点亮（覆盖"先上架后启动"）
+//    ② 链上 AgentRegistered（server/relayer.js）——报到表里已有心跳
+//       就当场点亮（覆盖"先启动后上架"）
+//  本脚本保留价值：批量体检探活、修接线、上线前 audit。
+//  设计点：链上自增 id 不进工程配置（编号是实现细节），一律按
+//  manifest 声明的 chainName 对账；endpoint 只写 SQLite 零 gas。
 //
-//  用法：node scripts/wire-agents.js
-//  （server 开不开都行——WAL 模式允许多进程读写；agent 服务要先起）
+//  用法：node scripts/wire-agents.js（agent 服务要先起）
 // ═══════════════════════════════════════════════════════════════════
 const { getDb } = require("../server/db");
+const MANIFEST = require("../agents/manifest");
 
-// 链上 Agent id → 执行体地址（对应 agents/ 目录五个服务）
-// ⚠️ 15/16 是按链上 nextId 预填的（写此表时链上共 14 个）——
-//    上架顺序必须是 Contract Guard 先、Storyboard Mate 后；
-//    如果实际 id 对不上，改这里或直接 sqlite UPDATE agents SET endpoint=...
-const WIRING = {
-  1: "http://127.0.0.1:9001", // ScriptWriter Pro → writer-agent（写稿）
-  2: "http://127.0.0.1:9003", // CodeWeaver       → review-agent（代码审查）
-  3: "http://127.0.0.1:9002", // DataMiner X      → data-agent（数据报告）
-  15: "http://127.0.0.1:9004", // Contract Guard   → contract-agent（合同审查·待上架）
-  16: "http://127.0.0.1:9005", // Storyboard Mate  → storyboard-agent（分镜脚本·待上架）
-  17: "http://127.0.0.1:9006", // Title Forge      → title-agent/server.mjs（Mastra 框架版·待上架）
-};
+/** 探活一个执行体：活着返回 true（2s 超时，health 非 ok 也算死） */
+async function isAlive(endpoint) {
+  try {
+    const r = await fetch(`${endpoint}/health`, { signal: AbortSignal.timeout(2000) });
+    return (await r.json()).ok === true;
+  } catch {
+    return false;
+  }
+}
+
+/** 按名找链上 Agent：active 优先，同名取最新 id（下架重挂场景） */
+function findOnChain(db, chainName) {
+  return db.prepare(`
+    SELECT id, status FROM agents WHERE name = ?
+    ORDER BY CASE status WHEN 'active' THEN 0 ELSE 1 END, id DESC
+  `).get(chainName);
+}
 
 async function main() {
   const db = getDb();
-  console.log("🔌 开始接线：链上 Agent ↔ 本地执行体\n");
+  console.log("🔌 开始按名接线：执行体 manifest ↔ 链上挂牌（编号无关）\n");
 
-  for (const [id, endpoint] of Object.entries(WIRING)) {
-    const a = db.prepare("SELECT name FROM agents WHERE id = ?").get(id);
-    if (!a) { console.log(`⛔ Agent#${id} 不在库（先上架或起 server 让 Relayer 补账）`); continue; }
-    db.prepare("UPDATE agents SET endpoint = ? WHERE id = ?").run(endpoint, id);
+  for (const { port, chainName } of MANIFEST) {
+    const endpoint = `http://127.0.0.1:${port}`;
 
-    let health = "❌ 探活失败（服务没起？node agents/start-all.js）";
-    try {
-      const r = await fetch(`${endpoint}/health`, { signal: AbortSignal.timeout(2000) });
-      const j = await r.json();
-      if (j.ok) health = `✅ ${j.agent} 在线（uptime ${j.uptimeSec}s）`;
-    } catch { /* 上面默认文案就是失败提示 */ }
-    console.log(`Agent#${id} ${a.name.padEnd(18)} → ${endpoint}  ${health}`);
+    if (!(await isAlive(endpoint))) {
+      console.log(`❌ :${port}  ${chainName.padEnd(16)} 服务没起（node agents/start-all.js），跳过`);
+      continue;
+    }
+
+    const row = findOnChain(db, chainName);
+    if (!row) {
+      console.log(`⏳ :${port}  ${chainName.padEnd(16)} 服务在线，链上还没这个名字——上架后重跑本脚本即可`);
+      continue;
+    }
+    if (row.status !== "active") {
+      console.log(`⛔ :${port}  ${chainName.padEnd(16)} 链上#${row.id} 状态=${row.status}（已下架），不接线`);
+      continue;
+    }
+
+    db.prepare("UPDATE agents SET endpoint = ? WHERE id = ?").run(endpoint, row.id);
+    console.log(`✅ :${port}  ${chainName.padEnd(16)} → 链上#${row.id}（${endpoint}）`);
   }
 
-  const wired = db.prepare("SELECT COUNT(*) AS c FROM agents WHERE endpoint != ''").get().c;
-  const total = db.prepare("SELECT COUNT(*) AS c FROM agents").get().c;
-  console.log(`\n→ ${wired}/${total} 个 Agent 有执行体，其余纯挂牌（接单后等手动 submit，行为兼容）`);
+  // 全景收尾：还挂着牌但没身体的（纯挂牌，接单后等手动 submit）
+  const bare = db.prepare("SELECT id, name FROM agents WHERE status = 'active' AND endpoint = '' ORDER BY id").all();
+  if (bare.length) {
+    console.log(`\n→ 纯挂牌无执行体：${bare.map((b) => `#${b.id} ${b.name}`).join("、")}`);
+  }
+  const wired = db.prepare("SELECT COUNT(*) AS c FROM agents WHERE status = 'active' AND endpoint != ''").get().c;
+  console.log(`→ 已点亮 ${wired} 个执行体`);
 }
 
 main().catch((e) => { console.error(e); process.exitCode = 1; });

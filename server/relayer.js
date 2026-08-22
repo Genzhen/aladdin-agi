@@ -104,6 +104,15 @@ function startRelayer() {
     `).run(Number(id), lo(owner), name, category, tags, String(pricePerRun), Number(id), Number(id), Number(id), now());
     log("AgentRegistered", `#${id} ${name}`);
     creditAirdrop(db, owner, 10, "agent_listed", Number(id)); // 上架奖励 10 MYT
+
+    // 自动接线（反向对账）：执行体先启动、链上后上架——报到表里早有心跳，当场点亮。
+    // 上架从此零后续操作：页面签完 register，几秒内 endpoint 就位（wire-agents 降级为诊断工具）
+    const ex = db.prepare("SELECT endpoint FROM executor_registry WHERE chain_name = ?").get(name);
+    if (ex) {
+      db.prepare("UPDATE agents SET endpoint = ? WHERE id = ? AND status = 'active'")
+        .run(ex.endpoint, Number(id));
+      log("AutoWire", `#${id} ${name} → ${ex.endpoint}（执行体已在心跳报到）`);
+    }
   });
 
   registry.on("AgentScoreUpdated", (id, oldScore, newScore, ev) => {

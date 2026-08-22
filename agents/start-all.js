@@ -4,17 +4,13 @@
 // ═══════════════════════════════════════════════════════════════════
 const { spawn } = require("child_process");
 const path = require("path");
+const MANIFEST = require("./manifest"); // 拉谁、端口多少，单一事实源
 
-const AGENTS = [
-  "writer-agent.js", "data-agent.js", "review-agent.js",
-  "contract-agent.js", "storyboard-agent.js",
-  "title-agent/server.mjs", // Mastra 框架版（自带 node_modules，ESM）
-];
 const kids = [];
 
-for (const f of AGENTS) {
-  const kid = spawn(process.execPath, [path.join(__dirname, f)], { stdio: "inherit" });
-  kid.on("exit", (code) => console.log(`[${f}] 退出 code=${code}`));
+for (const { file } of MANIFEST) {
+  const kid = spawn(process.execPath, [path.join(__dirname, file)], { stdio: "inherit" });
+  kid.on("exit", (code) => console.log(`[${file}] 退出 code=${code}`));
   kids.push(kid);
 }
 
@@ -22,4 +18,4 @@ for (const f of AGENTS) {
 for (const sig of ["SIGINT", "SIGTERM"]) {
   process.on(sig, () => { for (const k of kids) k.kill(sig); process.exit(0); });
 }
-console.log(`🚀 已拉起 ${AGENTS.length} 个 Agent 执行体（9001~9005），Ctrl+C 全部退出`);
+console.log(`🚀 已拉起 ${MANIFEST.length} 个 Agent 执行体（清单见 agents/manifest.js），Ctrl+C 全部退出`);

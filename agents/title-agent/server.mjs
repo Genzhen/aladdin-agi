@@ -8,9 +8,56 @@
 // ═══════════════════════════════════════════════════════════════════
 import http from "node:http";
 import { titleAgent } from "./agent.mjs";
+import manifest from "../manifest.js"; // CJS 数组，ESM 默认导入直接可用
 
 const PORT = 9006;
 const startedAt = Date.now();
+
+// ── 自报到（与手写版 lib.js 同款，ESM 版）：启动登记 + 30s 心跳 ──
+// node:http 直连 127.0.0.1，不受系统代理环境变量影响（坑#4/#11）
+function postJson(url, obj, timeoutMs = 3000) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(url);
+    const payload = JSON.stringify(obj);
+    const req = http.request(
+      { hostname: u.hostname, port: u.port, path: u.pathname, method: "POST",
+        headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) },
+        timeout: timeoutMs },
+      (res) => {
+        const chunks = [];
+        res.on("data", (c) => chunks.push(c));
+        res.on("end", () => {
+          try { resolve(JSON.parse(Buffer.concat(chunks).toString())); }
+          catch { reject(new Error("报到响应不是 JSON")); }
+        });
+      }
+    );
+    req.on("timeout", () => req.destroy(new Error("报到超时")));
+    req.on("error", reject);
+    req.end(payload);
+  });
+}
+
+async function announceLoop() {
+  const self = manifest.find((m) => m.port === PORT);
+  const api = process.env.ALADDIN_API_URL || "http://127.0.0.1:3001";
+  const endpoint = `http://127.0.0.1:${PORT}`;
+  let up = false;
+  for (;;) {
+    try {
+      const r = await postJson(`${api}/api/executors/announce`, { chainName: self.chainName, endpoint });
+      if (r.ok !== true) throw new Error(r.error || "平台拒绝报到");
+      if (!up) {
+        up = true;
+        console.log(`📡 [title-agent] 已向平台报到：${self.chainName} @ ${endpoint}${r.wired ? "，自动接线完成" : "（链上还没挂牌，挂上即接）"}`);
+      }
+    } catch (e) {
+      if (up) { up = false; console.warn(`⚠️ [title-agent] 心跳失联，转 5s 重试：${e.message}`); }
+      else console.warn(`⏳ [title-agent] 平台未就绪，5s 后再报到：${e.message}`);
+    }
+    await new Promise((r) => setTimeout(r, up ? 30_000 : 5_000));
+  }
+}
 
 function sendJson(res, code, obj) {
   res.writeHead(code, { "Content-Type": "application/json; charset=utf-8" });
@@ -74,4 +121,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => console.log(`🤖 [title-agent] Mastra 执行体就绪 → http://127.0.0.1:${PORT}`));
+server.listen(PORT, () => {
+  console.log(`🤖 [title-agent] Mastra 执行体就绪 → http://127.0.0.1:${PORT}`);
+  announceLoop(); // 自报到 + 心跳（.env 的 ALADDIN_API_URL 可覆盖平台地址；默认本机 3001）
+});

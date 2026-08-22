@@ -59,6 +59,63 @@ function sendJson(res, code, obj) {
   res.end(body);
 }
 
+// ── 自报到（服务自注册）：启动即向平台登记"我是谁、我在哪"，之后 30s 心跳 ──
+// 平台收到报到（routes/executors.js）或链上 AgentRegistered（relayer.js）任一事件，
+// 双向对账自动接线——上架/启动谁先谁后都行，wire-agents.js 只剩诊断用途。
+// 用 node:http 直连而非 fetch：系统代理环境变量（坑#4/#11）影响不到 127.0.0.1 直连。
+const manifest = require("./manifest");
+
+function postJson(url, obj, timeoutMs = 3000) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(url);
+    const payload = JSON.stringify(obj);
+    const req = http.request(
+      {
+        hostname: u.hostname, port: u.port, path: u.pathname, method: "POST",
+        headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) },
+        timeout: timeoutMs,
+      },
+      (res) => {
+        const chunks = [];
+        res.on("data", (c) => chunks.push(c));
+        res.on("end", () => {
+          try { resolve({ status: res.statusCode, body: JSON.parse(Buffer.concat(chunks).toString()) }); }
+          catch { reject(new Error(`报到响应不是 JSON（HTTP ${res.statusCode}）`)); }
+        });
+      }
+    );
+    req.on("timeout", () => req.destroy(new Error("报到超时")));
+    req.on("error", reject);
+    req.end(payload);
+  });
+}
+
+/** 报到循环：平台没起就 5s 猛重试（启动顺序解放），连上后 30s 心跳，失联自动回落重试 */
+async function announceLoop(port, agentName) {
+  const self = manifest.find((m) => m.port === port);
+  if (!self) {
+    console.warn(`⚠️ [${agentName}] 不在 agents/manifest.js 清单里，跳过自报到（接线只能走 wire-agents 手动）`);
+    return;
+  }
+  const api = process.env.ALADDIN_API_URL || "http://127.0.0.1:3001";
+  const endpoint = `http://127.0.0.1:${port}`;
+  let up = false;
+  for (;;) {
+    try {
+      const r = await postJson(`${api}/api/executors/announce`, { chainName: self.chainName, endpoint });
+      if (r.body?.ok !== true) throw new Error(r.body?.error || `HTTP ${r.status}`);
+      if (!up) {
+        up = true;
+        console.log(`📡 [${agentName}] 已向平台报到：${self.chainName} @ ${endpoint}${r.body.wired ? "，自动接线完成" : "（链上还没挂牌，挂上即接）"}`);
+      }
+    } catch (e) {
+      if (up) { up = false; console.warn(`⚠️ [${agentName}] 心跳失联（平台重启？），转 5s 重试：${e.message}`); }
+      else console.warn(`⏳ [${agentName}] 平台未就绪，5s 后再报到：${e.message}`);
+    }
+    await new Promise((r) => setTimeout(r, up ? 30_000 : 5_000));
+  }
+}
+
 // ── LLM 通道：DeepSeek（OpenAI 兼容 /chat/completions），原生 fetch 零依赖 ──
 // 失败（key 未配/网络/超时/空返回）一律 throw，由各 agent 的 brain 决定降级。
 // 生产替换点：换 provider 只改 BASE_URL/MODEL 环境变量；流式加 stream:true。
@@ -117,7 +174,10 @@ function listen(port, agentName, brain) {
       return sendJson(res, 500, { ok: false, agent: agentName, error: e.message });
     }
   });
-  server.listen(port, () => console.log(`🤖 [${agentName}] 执行体就绪 → http://127.0.0.1:${port}`));
+  server.listen(port, () => {
+    console.log(`🤖 [${agentName}] 执行体就绪 → http://127.0.0.1:${port}`);
+    announceLoop(port, agentName); // 自报到 + 心跳：平台据此自动接线（不再需要人工跑 wire-agents）
+  });
   return server;
 }
 

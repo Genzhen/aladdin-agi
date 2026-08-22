@@ -11,7 +11,7 @@ AI Agent 分发平台（双边市场）：工程师上架 Agent（链上登记�
 | 目录 | 是什么 | 技术栈 |
 |---|---|---|
 | `contracts/` | 三合约：MyToken / AgentRegistry / TaskEscrow | Solidity + Hardhat 2.29 + OZ 5.6.1 |
-| `agents/` | 3 个 Agent 执行体：写稿/数据报告/代码审查（9001~9003） | 零依赖 node:http |
+| `agents/` | 6 个 Agent 执行体（9001~9006，含 Mastra 框架版）；manifest.js 单一清单，wire-agents 按名接线不认编号 | 零依赖 node:http + Mastra |
 | `server/` | API + Relayer + 匹配引擎 + agent-runner（派活给执行体） | Express 4 + better-sqlite3 + ethers 6 |
 | `server/matching/` | 三层漏斗 V0/V1/V2（手写 TF-IDF、手写逻辑回归） | 纯 JS 零依赖 |
 | `engine-go/` | 队列消费者（重试+死信） | Go，零第三方依赖（手写 RESP） |
@@ -52,11 +52,11 @@ AI Agent 分发平台（双边市场）：工程师上架 Agent（链上登记�
 
 ```bash
 brew services start redis                                   # 队列
-node agents/start-all.js &                                  # 3 个 Agent 执行体 9001~9003
+node agents/start-all.js &                                  # 6 个 Agent 执行体 9001~9006
 cd server && node index.js &                                # API+Relayer :3001
 cd engine-go && go run . &                                  # 分发引擎
 cd app && npm run dev                                       # 前端 :5173
-node scripts/wire-agents.js                                 # Agent ↔ 执行体 接线（一次性）
+node scripts/wire-agents.js                                 # 诊断工具（接线已全自动：执行体自报到+链上事件双向对账）
 ```
 
 链上操作钱包 = 部署者 `0x5633…8F50`（owner），私钥在根 `.env`（勿提交）。
