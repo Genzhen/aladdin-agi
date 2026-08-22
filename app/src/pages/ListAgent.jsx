@@ -4,7 +4,7 @@
 //    自动入库并记 +10 MYT(agent_listed),前端零配合
 // ③ 剩下要做的只是:发交易 → 轮询 /api/agents 等新名字出现
 import { useQueryClient } from '@tanstack/react-query'
-import { useAccount } from 'wagmi'
+import { useAccount, useSignMessage } from 'wagmi'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api'
@@ -14,11 +14,13 @@ import { useTx } from '../components/Wallet'
 
 export default function ListAgent() {
   const { isConnected } = useAccount()
+  const { signMessageAsync } = useSignMessage()
   const qc = useQueryClient()
   const { send, pending, lastError } = useTx()
 
-  const [form, setForm] = useState({ name: '', category: 'Coding', tags: '', priceEth: '0.01' })
+  const [form, setForm] = useState({ name: '', category: 'Coding', tags: '', priceEth: '0.01', endpoint: '' })
   const [agentId, setAgentId] = useState(null)
+  const [probe, setProbe] = useState(null) // 外部服务地址登记后的探活回告
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value })
 
   const priceWei = form.priceEth && !isNaN(form.priceEth) ? ethToWei(form.priceEth) : 0n
@@ -35,7 +37,19 @@ export default function ListAgent() {
       await new Promise((res) => setTimeout(res, 3000))
       const list = await api.agents()
       const found = list.find((a) => a.name === form.name)
-      if (found) { setAgentId(found.id); qc.invalidateQueries({ queryKey: ['agents'] }); return }
+      if (found) {
+        setAgentId(found.id); qc.invalidateQueries({ queryKey: ['agents'] })
+        // 开放市场:填了服务地址 → owner 签名登记(平台只认 /health+/run 契约)
+        if (form.endpoint.trim()) {
+          try {
+            const ts = Date.now()
+            const sig = await signMessageAsync({ message: `aladdin:enrich:${found.id}:${ts}` })
+            const er = await api.enrichAgent(found.id, { endpoint: form.endpoint.trim(), sig, ts })
+            setProbe(er.probe || null)
+          } catch (e2) { setProbe({ reachable: false, detail: `登记失败: ${e2.message}` }) }
+        }
+        return
+      }
     }
     setAgentId(-1) // 链上成功但库里还没出现(Relayer 延迟)
   }
@@ -71,6 +85,9 @@ export default function ListAgent() {
             <Field label="单次调用定价(ETH)*" hint="合约要求 pricePerRun > 0,0 会被 revert">
               <input className={inputCls} value={form.priceEth} onChange={set('priceEth')} required />
             </Field>
+            <Field label="服务地址(选填,外部商家)" hint="自营执行体留空(按名自动接线);外部商家填自己的 https 服务,需实现 GET /health + POST /run 契约——平台只认契约,实现框架随意">
+              <input className={inputCls} value={form.endpoint} onChange={set('endpoint')} placeholder="https://your-agent.example.com" />
+            </Field>
             {lastError && <div className="rounded-lg bg-rose/10 p-2 text-xs text-rose">❌ {lastError}</div>}
           </form>
         </Card>
@@ -102,6 +119,13 @@ export default function ListAgent() {
       {agentId > 0 && (
         <Card className="space-y-2 border-mint/40">
           <div className="font-semibold text-mint">✅ Agent #{agentId} 上架成功!</div>
+          {probe && (
+            <div className={`text-xs ${probe.reachable ? 'text-mint' : 'text-amber'}`}>
+              {probe.reachable
+                ? `🟢 服务地址已登记,平台探活 /health 通过(${probe.detail})——可以接单了`
+                : `🔴 服务地址已登记但探活失败(${probe.detail})——检查服务后在详情页改地址`}
+            </div>
+          )}
           <p className="text-xs text-slate-400">市场页已可见,+10 MYT 已记账。去详情页看看它的冷启动状态:</p>
           <Link to={`/agent/${agentId}`}><Btn tone="mint">查看 Agent →</Btn></Link>
         </Card>

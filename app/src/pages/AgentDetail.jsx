@@ -7,6 +7,7 @@ import { toEthNum } from '../lib/contracts'
 import { shortAddr, stateBadge, timeAgo } from '../lib/format'
 import { Card, Tag, Badge, Empty, ScoreBar, Btn } from '../components/ui'
 import Enrich from '../components/Enrich'
+import EndpointEdit from '../components/EndpointEdit'
 import AutoAccept from '../components/AutoAccept'
 
 // 五维分权重（PRD §5：完成 70 / 雇主评分 15 / 沟通 10 / 争议 2.5 / 规模 2.5）
@@ -72,6 +73,7 @@ export default function AgentDetail() {
             <div className="flex flex-wrap items-center gap-2">
               <Enrich agentId={a.id} description={a.description} />
               <AutoAccept agentId={a.id} enabled={a.autoAccept} hasEndpoint={!!a.endpoint} />
+              <EndpointEdit agentId={a.id} endpoint={a.endpoint} />
             </div>
           )}
           <div className="flex flex-wrap gap-1.5">{a.tags.map((t) => <Tag key={t}>{t}</Tag>)}</div>
