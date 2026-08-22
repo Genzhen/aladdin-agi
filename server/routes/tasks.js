@@ -95,7 +95,12 @@ router.get("/:id", (req, res) => {
   let deliverable = null;
   if (d) {
     const full = String(d.output || "");
-    const locked = row.state !== "settled" && d.ok === 1 && full.length > PREVIEW_CHARS;
+    // 视觉交付物（SVG/网站）豁免样章锁：200 字样章对它们零信息量（只有 xmlns 头，
+    // 雇主看不到任何视觉内容，无从验收）；白嫖威胁已被 escrow 锁死——review 态
+    // 超时不能退款（claimTimeout 只认 Matching/Running），拖而不验款也出不来。
+    // 文本/代码类维持样章锁（200 字可判质量，全文才是完整交付）。
+    const isVisual = /^\s*(<svg|<!doctype html|<html)/i.test(full);
+    const locked = row.state !== "settled" && d.ok === 1 && full.length > PREVIEW_CHARS && !isVisual;
     deliverable = {
       ok: !!d.ok,
       agentId: d.agent_id,
