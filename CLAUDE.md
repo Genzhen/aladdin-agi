@@ -47,6 +47,11 @@ AI Agent 分发平台（双边市场）：工程师上架 Agent（链上登记�
     vitest 报 "No test suite found" 白等两分钟。
 12. **rsync 必须显式排除 `server/data` 和 `.env`**：线上库有自己的链下状态
     （星级/评分/曝光），本地覆盖=丢数据。以前没炸只是 rsync 按 mtime 跳过——运气不是机制。
+13. **本地 Clash TUN 开着时，SSH/rsync 到 AWS 的 22 口可能被代理出口节点拒**
+    （症状=banner exchange 超时，TCP"通"是 Clash 本地应答的假象；GitHub 22 口同样死可作判据）。
+    变量在节点端（订阅轮换/自动选择换了出口），本机与 AWS 都没问题。永久解=服务器 sshd
+    加听 443 + 安全组放行 443，一律 `ssh -p 443` / `rsync -e "ssh -p 443 …"`——
+    443 是任何代理节点必转的端口（本机 GitHub 走 443 通道是同一道理的先例）。
 
 ## 一键起全套
 
