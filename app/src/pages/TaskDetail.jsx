@@ -142,6 +142,25 @@ export default function TaskDetail() {
         </Card>
       </div>
 
+      {/* 交付物：Agent 执行体的真实产出（agent-runner 落库；null=还没好或纯挂牌） */}
+      {t.deliverable && (
+        <Card className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold">📦 交付物 · Agent #{t.deliverable.agentId} 的真实产出</h2>
+            <span className="text-[11px] text-slate-500">{timeAgo(t.deliverable.createdAt)}</span>
+          </div>
+          {t.deliverable.ok ? (
+            <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg border border-line bg-night/50 p-3 font-mono text-xs leading-relaxed text-slate-300">
+              {t.deliverable.output}
+            </pre>
+          ) : (
+            <div className="rounded-lg border border-rose/30 bg-rose/10 p-3 text-xs text-rose">
+              ❌ 执行体失败：{t.deliverable.error}（任务仍在进行中，工程师可手动交付补救）
+            </div>
+          )}
+        </Card>
+      )}
+
       {/* 角色操作面板（演示自演自接：一个钱包顶两个角色） */}
       <Card className="space-y-3">
         <h2 className="font-semibold">操作（当前钱包什么角色就点什么）</h2>

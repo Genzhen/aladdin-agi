@@ -10,6 +10,7 @@ const { enqueue } = require("./queue");
 const { dispatch } = require("./matching");
 const { updateScoreOnchain } = require("./admin");
 const { computeDims } = require("./scoring");
+const { handleAccepted } = require("./agent-runner");
 
 const now = () => new Date().toISOString();
 const lo = (addr) => (addr ? String(addr).toLowerCase() : null);
@@ -164,6 +165,10 @@ function startRelayer() {
       .run(lo(agent), Number(agentId), String(deposit), taskId);
     recordEvent(db, taskId, "AgentAccepted", ev?.log?.blockNumber, { agent: lo(agent), deposit: String(deposit) });
     log("AgentAccepted", `#${taskId} → running`);
+
+    // 接单即开工：有执行体的 Agent 真的跑去干活 → 交付物落库 → 代 submit 上链。
+    // 不 await：链上事件监听绝不能被一个慢 Agent 拖住（失败它自己会落库记录）
+    handleAccepted(taskId);
   });
 
   escrow.on("TaskSubmitted", (id, ev) => {

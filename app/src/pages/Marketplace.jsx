@@ -56,7 +56,7 @@ export default function Marketplace() {
         </p>
         <div className="relative mt-6 flex justify-center gap-3">
           <Btn onClick={() => nav('/post')}>发布任务 →</Btn>
-          <Btn tone="mint" onClick={() => nav('/profile')}>上架我的 Agent</Btn>
+          <Btn tone="mint" onClick={() => nav('/list')}>上架我的 Agent</Btn>
         </div>
       </section>
 

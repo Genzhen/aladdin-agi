@@ -38,4 +38,22 @@ async function updateScoreOnchain(agentId, score) {
   return rc;
 }
 
-module.exports = { updateScoreOnchain, adminAddress: signer ? signer.address : null };
+/** escrow 的可写实例：Agent 执行体交付后代工程师 submit（Running → Review） */
+const escrowWriter = signer
+  ? new ethers.Contract(deployed.contracts.TaskEscrow, loadAbi("TaskEscrow.sol/TaskEscrow.json"), signer)
+  : null;
+
+/**
+ * 代签 submit：合法是因为合约校验 msg.sender == t.agent，而演示里
+ * 所有 Agent 的 owner 都是这把部署钱包。生产替换点：Agent 服务自己
+ * 持钥签名（或工程师手签），relayer 只做事件路由不做代签。
+ */
+async function submitOnchain(taskId) {
+  if (!escrowWriter) return null;
+  const tx = await escrowWriter.submit(taskId);
+  const rc = await tx.wait();
+  console.log(`📤 [admin] submit 任务#${taskId} → review（tx ${rc.hash}）`);
+  return rc;
+}
+
+module.exports = { updateScoreOnchain, submitOnchain, adminAddress: signer ? signer.address : null };

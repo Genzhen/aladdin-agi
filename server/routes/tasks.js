@@ -82,7 +82,13 @@ router.get("/:id", (req, res) => {
     "SELECT name, block, args, created_at FROM task_events WHERE task_id = ? ORDER BY id"
   ).all(req.params.id);
 
-  res.json({ ...toApi(row), events });
+  // 交付物：Agent 执行体的真实产出（running 中可能还没好；无执行体则恒为 null）
+  const d = db.prepare("SELECT * FROM task_results WHERE task_id = ?").get(req.params.id);
+  const deliverable = d
+    ? { ok: !!d.ok, agentId: d.agent_id, output: d.output, error: d.error, createdAt: d.created_at }
+    : null;
+
+  res.json({ ...toApi(row), events, deliverable });
 });
 
 module.exports = router;

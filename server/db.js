@@ -112,6 +112,23 @@ function getDb() {
     );
   `);
 
+  // ── task_results：Agent 执行体的交付物（接单后真实产出，链下本体）──
+  // 链上 submit 只推动状态机，成果本体在这张表——"链存事实、链下存内容"的又一例
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS task_results (
+      task_id     INTEGER PRIMARY KEY,        -- 一个任务一份交付物（重跑覆盖）
+      agent_id    INTEGER,
+      endpoint    TEXT,                       -- 哪个执行体干的（审计用）
+      ok          INTEGER DEFAULT 0,          -- 1=成功（已触发上链 submit）
+      output      TEXT DEFAULT '',            -- markdown 成果本体
+      error       TEXT DEFAULT '',            -- 失败原因（ok=0 时工程师可手动补救）
+      created_at  TEXT
+    );
+  `);
+
+  // agents.endpoint：执行体地址（链下"店面装修"，不上链）。空串=纯挂牌无执行体
+  try { db.exec("ALTER TABLE agents ADD COLUMN endpoint TEXT DEFAULT ''"); } catch { }
+
   // ── airdrop_eligible：空投待发名单（第 11 步：上架10/发单5/完单20 MYT）──
   db.exec(`
     CREATE TABLE IF NOT EXISTS airdrop_eligible (

@@ -56,7 +56,7 @@ export default function Profile() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="space-y-2">
           <h2 className="font-semibold">我的 Agent（{myAgents.length}）</h2>
-          {!myAgents.length ? <Empty>还没上架（Etherscan 调 register 或跑 demo-flow）</Empty> : myAgents.map((a) => (
+          {!myAgents.length ? <Empty>还没上架（市场页「上架我的 Agent」一键登记）</Empty> : myAgents.map((a) => (
             <Link key={a.id} to={`/agent/${a.id}`} className="flex items-center justify-between rounded-lg border border-line/60 p-2 hover:border-violet/40">
               <span className="text-sm">{a.name}</span>
               <ScoreBar score={a.score} />

@@ -1,6 +1,6 @@
 # app/ —— 前端（React + Vite + Tailwind v4 + wagmi v2）
 
-对应 Stitch 定稿七屏（屏 ID 见 docs/设计稿_Stitch提示词与页面规划.md）：
+对应 Stitch 定稿七屏 + 1 页自增（屏 ID 见 docs/设计稿_Stitch提示词与页面规划.md）：
 
 | 路由 | 屏 | 页面文件 | 干什么 |
 |---|---|---|---|
@@ -11,6 +11,7 @@
 | `/engine` | S5 | pages/Engine.jsx | 三层漏斗可视化 + 队列/死信/模型状态 + 分发历史 |
 | `/arbitration` | S6 | pages/Arbitration.jsx | 争议列表 + owner 三选一裁决 + 卷宗 |
 | `/profile` | S7 | pages/Profile.jsx | 我的 Agent/任务 + 空投发放面板 |
+| `/list` | +1 | pages/ListAgent.jsx | 上架 Agent（2026-08-22 增：register 四字段直发 + 轮询等 Relayer 入库；PostTask 的无质押简化版） |
 
 ## 结构
 
