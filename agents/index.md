@@ -41,6 +41,7 @@ L3 的 xhs-agent **自持钥自签**——平台退回纯路由。
 `scripts/wire-agents.js` 降级为诊断/修复工具。demo 级防冒认 = 报到只认 manifest
 内的名字和端口；真正的身份证明是 owner 签名（L3 双钱包方案的生产替换点）。
 | `start-all.js` | — | 一键启动 | 按 manifest 拉起全部服务，Ctrl+C 整组退出 |
+| `external/` | 9011~9015 | **不在 manifest**（外部商家扮演区） | 5 个开放市场演示体：上架时商家填自己的 URL 接线，平台只认 health/run 契约——演示手册见 `agents/外部Agent演示清单.md` |
 
 ## 框架版 vs 手写版（title-agent 是活教材）
 
